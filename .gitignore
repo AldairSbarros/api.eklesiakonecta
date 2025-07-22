@@ -1,0 +1,12 @@
+node_modules
+# Keep environment variables out of version control
+.env
+coverage/
+backups/
+
+uploads/comprovantes/.env_render
+.env_render
+.env.local
+.env.bkp 
+.env.example
+.env*
