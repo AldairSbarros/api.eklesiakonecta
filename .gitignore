@@ -6,3 +6,7 @@ backups/
 
 uploads/comprovantes/.env_render
 .env_render
+.env.local
+.env.bkp 
+.env.example
+.env*
