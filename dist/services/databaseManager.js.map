@@ -1,0 +1,1 @@
+{"version":3,"file":"databaseManager.js","sourceRoot":"","sources":["../../src/services/databaseManager.ts"],"names":[],"mappings":";;AAEA,gCAMC;AARD,iDAAqC;AAErC,SAAgB,UAAU,CAAC,SAAiB;IAC1C,IAAA,oBAAI,EAAC,YAAY,SAAS,EAAE,EAAE,CAAC,GAAG,EAAE,EAAE;QACpC,IAAI,CAAC,GAAG,EAAE,CAAC;YACT,IAAA,oBAAI,EAAC,yCAAyC,SAAS,SAAS,CAAC,CAAC;QACpE,CAAC;IACH,CAAC,CAAC,CAAC;AACL,CAAC"}
