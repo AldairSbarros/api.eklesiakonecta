@@ -75,7 +75,7 @@ const sermao_routes_1 = __importDefault(require("./routes/sermao.routes"));
 const password_routes_1 = __importDefault(require("./routes/password.routes"));
 const financeiro_routes_1 = __importDefault(require("./routes/financeiro.routes"));
 const devuser_routes_1 = __importDefault(require("./routes/devuser.routes"));
-// import relatoriosRoutes from './routes/relatorios.routes'; // Corrigido: era arquivo.routes
+// import relatoriosRoutes from './routes/relatorios.routes';
 const live_routes_1 = __importDefault(require("./routes/live.routes"));
 const cadastroInicial_routes_1 = __importDefault(require("./routes/cadastroInicial.routes"));
 const usuarioController = __importStar(require("./controllers/usuario.controller"));
@@ -87,52 +87,62 @@ const app = (0, express_1.default)();
 // Middlewares globais
 app.use((0, express_rate_limit_1.default)({ windowMs: 15 * 60 * 1000, max: 100 }));
 app.use((0, helmet_1.default)());
-// CORS configurado para aceitar apenas o frontend local e permitir headers customizados
+// 🔐 CORS atualizado para ambientes local e de produção
+const allowedOrigins = [
+    'http://localhost:5173',
+    'https://app.eklesia.app.br'
+];
 app.use((0, cors_1.default)({
-    origin: 'http://localhost:5173',
+    origin: function (origin, callback) {
+        if (!origin || allowedOrigins.includes(origin)) {
+            callback(null, true);
+        }
+        else {
+            callback(new Error('Origem não permitida pelo CORS'));
+        }
+    },
     credentials: true
 }));
 app.use((req, res, next) => {
-    res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, X-Church-Schema, schema');
+    res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization, X-Church-Schema, schema');
     next();
 });
 app.use(express_1.default.json());
-// Rota de health check para o frontend (após CORS)
+// Rota de health check
 app.get('/test', (req, res) => {
     res.status(200).json({ ok: true });
 });
 // Documentação Swagger
 app.use('/api-docs', swagger_ui_express_1.default.serve, swagger_ui_express_1.default.setup(swaggerConfig_1.default));
-// Rota de cadastro inicial (sem autenticação)
+// Rotas abertas
 app.use('/api', cadastroInicial_routes_1.default);
-// Rotas de transmissões ao vivo (lives)
 app.use('/api/lives', live_routes_1.default);
-// Rotas principais de entidades
+// Rotas principais
 app.use('/api/igrejas', church_routes_1.default);
 app.use('/api/congregacoes', congregacao_routes_1.default);
 app.use('/api/membros', member_routes_1.default);
 app.use('/api/usuarios', usuario_routes_1.default);
 app.use('/api/pastores', pastor_routes_1.default);
-// Rotas de células e reuniões
+// Células
 app.use('/api/celulas', celula_routes_1.default);
 app.use('/api/reunioes-celula', reuniaoCelula_routes_1.default);
 app.use('/api/presencas-celula', presencaCelula_routes_1.default);
 app.use('/api/visitantes-celula', visitante_routes_1.default);
 app.use('/api/mensagens-celula', mensagemCelula_routes_1.default);
-// Rotas de discipulado (CRUD completo)
+// Discipulado
 app.use('/api/discipulado', discipulado_routes_1.default);
-// Rotas de ministérios e escola de líderes
+// Ministério & Escola de líderes
 app.use('/api/ministerios-locais', ministerioLocal_routes_1.default);
 app.use('/api/escola-lideres-turmas', escolaLideresTurma_routes_1.default);
 app.use('/api/escola-lideres-licoes', escolaLideresLicao_routes_1.default);
-// Rotas de finanças
+// Finanças
 app.use('/api/offerings', offering_routes_1.default);
 app.use('/api/despesas', despesa_routes_1.default);
 app.use('/api/receitas', receita_routes_1.default);
 app.use('/api/investimentos', investimentos_routes_1.default);
 app.use('/api/financeiro', financeiro_routes_1.default);
 app.use('/api/faturas', fatura_routes_1.default);
-// Outras rotas de funcionalidades
+// Funcionalidades
 app.use('/api/dashboard', dashboard_routes_1.default);
 app.use('/api/notificacoes', notificacao_routes_1.default);
 app.use('/api/permissoes', permissao_routes_1.default);
@@ -145,18 +155,18 @@ app.use('/api/enderecos-membro', enderecoMembro_routes_1.default);
 app.use('/api/encontros', encontro_routes_1.default);
 app.use('/api/password', password_routes_1.default);
 // app.use('/api/relatorios', relatoriosRoutes);
-app.use('/api/auth', auth_routes_1.default); // Inclui /api/auth/login, /api/auth/logout, etc
-// Rota alternativa de login de usuário
+app.use('/api/auth', auth_routes_1.default);
+// Login alternativo
 app.post('/api/usuarios/login', (0, express_async_handler_1.default)(usuarioController.login));
-// Rotas de super admin/dev
+// Dev rotas
 app.use('/api', devuser_routes_1.default);
-// Rotas para arquivos estáticos
+// Arquivos estáticos
 app.use('/uploads', express_1.default.static('uploads'));
-// Rota base de status
+// Rota base
 app.get('/', (req, res) => {
     res.send('API Eklesia Konecta rodando');
 });
-// Cron para backup agendado
+// Cron de backup
 const cron = require('node-cron');
 const { exec } = require('child_process');
 const path = require('path');

@@ -9,6 +9,6 @@ const app_1 = __importDefault(require("./app"));
 const PORT = process.env.PORT || 3001;
 app_1.default.listen(PORT, () => {
     console.log(`Servidor do Eklesia Konecta rodando na porta ${PORT}`);
-    console.log(`Documentação Swagger disponível em http://localhost:${PORT}/api-docs`);
+    console.log(`Documentação Swagger disponível em https://api.eklesia.app.br/api-docs`);
 });
 //# sourceMappingURL=server.js.map
