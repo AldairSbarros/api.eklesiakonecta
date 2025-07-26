@@ -1,5 +1,3 @@
-import swaggerJSDoc from 'swagger-jsdoc';
-
 const options = {
   definition: {
     openapi: '3.0.0',
@@ -7,11 +5,24 @@ const options = {
       title: 'API EklesiaKonecta',
       version: '1.0.0',
       description: 'Documentação automática da API EklesiaKonecta'
-    }
+    },
+    servers: [
+      {
+        url: 'https://api.eklesia.app.br',
+        description: 'Servidor de produção'
+      },
+      {
+        url: 'http://localhost:3001',
+        description: 'Servidor local'
+      }
+
+    ]
   },
   apis: ['./src/routes/*.ts', './src/controllers/*.ts'],
 };
 
-const swaggerSpec = swaggerJSDoc(options);
+export default options;
+import swaggerUi from 'swagger-ui-express';
+import { Request, Response } from 'express';
+import rateLimit from 'express-rate-limit';
 
-export default swaggerSpec;
