@@ -8,7 +8,7 @@ const options = {
     },
     servers: [
       {
-        url: 'https://api.eklesia.app.br',
+        url: 'https://api.eklesia.app.br:3001',
         description: 'Servidor de produção'
       },
       {
