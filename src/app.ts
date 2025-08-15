@@ -57,7 +57,10 @@ app.use(helmet());
 // 🔐 CORS atualizado para ambientes local e de produção
 const allowedOrigins = [
   'http://localhost:5173',
-  'https://api.eklesia.app.br:3001'
+  'https://api.eklesia.app.br:3001',
+  'https://eklesia.app.br',
+  'http://eklesia.app.br',
+  'www.eklesia.app.br',
 ];
 
 app.use(cors({
