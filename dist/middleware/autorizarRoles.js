@@ -7,7 +7,15 @@ function autorizarRoles(rolesPermitidos) {
         // Padronize para maiúsculo
         const perfil = user?.perfil?.toUpperCase();
         const roles = rolesPermitidos.map(r => r.toUpperCase());
-        if (!user || !roles.includes(perfil)) {
+        // Permite SUPERUSER acessar tudo
+        if (!user) {
+            res.status(403).json({ error: "Acesso negado." });
+            return;
+        }
+        if (perfil === 'SUPERUSER' || user.superuser === true) {
+            return next();
+        }
+        if (!roles.includes(perfil)) {
             res.status(403).json({ error: "Acesso negado." });
             return;
         }

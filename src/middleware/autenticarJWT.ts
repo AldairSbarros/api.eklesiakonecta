@@ -17,6 +17,13 @@ export function autenticarJWT(req: Request, res: Response, next: NextFunction): 
       return;
     }
     (req as any).user = user;
+    // Se for SUPERUSER, já libera
+    if (user && typeof user === 'object' && ('perfil' in user || 'superuser' in user)) {
+      // @ts-ignore
+      if (user.perfil === 'SUPERUSER' || user.superuser === true) {
+        return next();
+      }
+    }
     next();
   });
 }

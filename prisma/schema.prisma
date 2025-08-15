@@ -191,6 +191,8 @@ enum PerfilUsuario {
   Tesoureiro
   Secretario
   Pastor
+  superuser
+  SUPERUSER
 }
 model Usuario {
   id              Int          @id @default(autoincrement())

@@ -19,6 +19,13 @@ function autenticarJWT(req, res, next) {
             return;
         }
         req.user = user;
+        // Se for SUPERUSER, já libera
+        if (user && typeof user === 'object' && ('perfil' in user || 'superuser' in user)) {
+            // @ts-ignore
+            if (user.perfil === 'SUPERUSER' || user.superuser === true) {
+                return next();
+            }
+        }
         next();
     });
 }

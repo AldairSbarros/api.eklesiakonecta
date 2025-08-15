@@ -3,7 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.onlySuperUser = onlySuperUser;
 function onlySuperUser(req, res, next) {
     const user = req.user;
-    if (user && user.superuser) {
+    if (user && (user.superuser === true || user.perfil === 'SUPERUSER')) {
         next();
         return;
     }

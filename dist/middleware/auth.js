@@ -20,6 +20,10 @@ function authMiddleware(perfisPermitidos = []) {
         try {
             const decoded = jsonwebtoken_1.default.verify(token, process.env.JWT_SECRET || 'segredo');
             req.user = decoded;
+            // Permite SUPERUSER acessar tudo
+            if (decoded.perfil === 'SUPERUSER' || decoded.superuser === true) {
+                return next();
+            }
             if (perfisPermitidos.length && !perfisPermitidos.includes(decoded.perfil)) {
                 res.status(403).json({ error: 'Acesso negado para este perfil' });
                 return;

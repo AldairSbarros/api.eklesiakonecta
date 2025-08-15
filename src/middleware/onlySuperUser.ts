@@ -2,7 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 
 export function onlySuperUser(req: Request, res: Response, next: NextFunction): void {
   const user = (req as any).user;
-  if (user && user.superuser) {
+  if (user && (user.superuser === true || user.perfil === 'SUPERUSER')) {
     next();
     return;
   }
