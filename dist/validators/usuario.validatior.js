@@ -10,8 +10,8 @@ exports.validarCadastroUsuario = [
     (0, express_validator_1.body)("senha")
         .isLength({ min: 6 }).withMessage("A senha deve ter pelo menos 6 caracteres."),
     (0, express_validator_1.body)("perfil")
-        .isIn(["admin", "dirigente", "tesoureiro"])
-        .withMessage("Perfil deve ser admin, dirigente ou tesoureiro."),
+        .isIn(["admin", "dirigente", "tesoureiro", 'SUPERUSER'])
+        .withMessage("Perfil deve ser admin, dirigente ou tesoureiro, superuser."),
     // ...outras validações se necessário
 ];
 //# sourceMappingURL=usuario.validatior.js.map

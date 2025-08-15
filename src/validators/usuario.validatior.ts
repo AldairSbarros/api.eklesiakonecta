@@ -8,7 +8,7 @@ export const validarCadastroUsuario = [
   body("senha")
     .isLength({ min: 6 }).withMessage("A senha deve ter pelo menos 6 caracteres."),
   body("perfil")
-    .isIn(["admin", "dirigente", "tesoureiro"])
-    .withMessage("Perfil deve ser admin, dirigente ou tesoureiro."),
+    .isIn(["admin", "dirigente", "tesoureiro", 'SUPERUSER'])
+    .withMessage("Perfil deve ser admin, dirigente ou tesoureiro, superuser."),
   // ...outras validações se necessário
 ];

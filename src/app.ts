@@ -60,7 +60,8 @@ const allowedOrigins = [
   'https://api.eklesia.app.br:3001',
   'https://eklesia.app.br',
   'http://eklesia.app.br',
-  'www.eklesia.app.br',
+  'https://www.eklesia.app.br',
+  'http://www.eklesia.app.br'
 ];
 
 app.use(cors({
