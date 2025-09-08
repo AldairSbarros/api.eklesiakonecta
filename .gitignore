@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Arquivos de ambiente e backups (NUNCA versionar)
 .env
 .env.*
@@ -6,6 +7,8 @@
 .env.bkp
 .env.local
 .env_localhost.bkp
+=======
+>>>>>>> 141763c47bccc97b5b7c143a9407e64c2990b451
 node_modules
 # Keep environment variables out of version control
 .env
@@ -18,3 +21,8 @@ uploads/comprovantes/.env_render
 .env.bkp 
 .env.example
 .env*
+<<<<<<< HEAD
+=======
+eklesia.zip
+eklesia.zip
+>>>>>>> 141763c47bccc97b5b7c143a9407e64c2990b451

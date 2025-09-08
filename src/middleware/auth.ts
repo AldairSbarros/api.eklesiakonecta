@@ -31,11 +31,21 @@ export default function authMiddleware(perfisPermitidos: string[] = []) {
       const decoded = jwt.verify(token, process.env.JWT_SECRET || 'segredo') as DecodedToken;
       req.user = decoded;
 
+<<<<<<< HEAD
+=======
+      // Permite SUPERUSER acessar tudo
+      if (decoded.perfil === 'SUPERUSER' || (decoded as any).superuser === true) {
+        return next();
+      }
+>>>>>>> 141763c47bccc97b5b7c143a9407e64c2990b451
       if (perfisPermitidos.length && !perfisPermitidos.includes(decoded.perfil)) {
         res.status(403).json({ error: 'Acesso negado para este perfil' });
         return;
       }
+<<<<<<< HEAD
 
+=======
+>>>>>>> 141763c47bccc97b5b7c143a9407e64c2990b451
       next();
     } catch (err) {
       res.status(401).json({ error: 'Token inválido ou expirado' });
