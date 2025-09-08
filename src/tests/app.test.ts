@@ -14,7 +14,7 @@ describe('Testes básicos do EklesiaApp', () => {
   it('GET / deve retornar status 200 e mensagem', async () => {
     const res = await request(app).get('/');
     expect([200, 301]).toContain(res.status);
-    expect(res.text).toContain('API EklesiaApp rodando');
+  expect(res.text).toContain('API Eklesia Konecta rodando');
   });
 
   it('GET /api-docs/ deve retornar status 200 ou 301', async () => {
