@@ -8,16 +8,10 @@ import path from 'path';
 export const create = async (req: Request, res: Response): Promise<void> => {
   try {
     console.log('BODY RECEBIDO:', req.body)
-<<<<<<< HEAD
     const schema = extractSchema(req);
     const validationError = validateSchema(schema);
     if (validationError.error) {
       res.status(400).json(validationError);
-=======
-  const schema = (req.headers['x-church-schema'] || req.headers['schema']) as string;
-    if (!schema) {
-      res.status(400).json({ error: 'Schema não informado no header.' });
->>>>>>> 5d75a27 (fix: multi-tenancy completo, todos os controllers usam header x-church-schema ou schema, relatórios reais de células e financeiro)
       return;
     }
     // Aceita os campos do seu teste
