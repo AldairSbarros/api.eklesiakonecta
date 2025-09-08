@@ -2,7 +2,15 @@ import { getPrisma } from "../utils/prismaDynamic";
 
 export const createCelula = async (schema: string, data: any) => {
   const prisma = getPrisma(schema);
-  return prisma.celula.create({ data });
+  // Garante que só os campos corretos são enviados
+  const { nome, congregacaoId } = data;
+  if (!congregacaoId) throw new Error('congregacaoId é obrigatório');
+  return prisma.celula.create({
+    data: {
+      nome,
+      congregacaoId
+    }
+  });
 };
 
 export const listCelulas = async (schema: string) => {

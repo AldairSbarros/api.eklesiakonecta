@@ -4,7 +4,15 @@ import { getPrisma } from "../utils/prismaDynamic";
 
 export const createCongregacao = async (schema: string, data: any) => {
   const prisma = getPrisma(schema);
-  return prisma.congregacao.create({ data });
+  const { nome, churchId, endereco } = data;
+  if (!churchId) throw new Error('churchId é obrigatório');
+  return prisma.congregacao.create({
+    data: {
+      nome,
+      churchId,
+      endereco
+    }
+  });
 };
 
 export const listCongregacoes = async (schema: string) => {

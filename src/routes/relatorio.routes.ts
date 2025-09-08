@@ -21,7 +21,7 @@ function asyncHandler(
  *       200:
  *         description: Relatório mensal retornado com sucesso
  */
-router.get('/mensal', asyncHandler(async (req, res) => relatorioController.relatorioMensal(req)));
+router.get('/mensal', asyncHandler(async (req, res) => relatorioController.relatorioMensal(req, res)));
 
 /**
  * @swagger
@@ -43,7 +43,7 @@ router.get('/discipulado/por-discipulador', asyncHandler(relatorioController.rel
  *       200:
  *         description: PDF do relatório mensal retornado com sucesso
  */
-router.get('/mensal/pdf', asyncHandler(async (req, res) => relatorioController.relatorioMensalPDF(req)));
+router.get('/mensal/pdf', asyncHandler(async (req, res) => relatorioController.relatorioMensalPDF(req, res)));
 
 /**
  * @swagger
@@ -65,6 +65,9 @@ router.get('/celulas', asyncHandler(relatorioController.relatorioCelulas));
  *       200:
  *         description: Relatório financeiro retornado com sucesso
  */
-router.get('/financeiro', asyncHandler(relatorioController.relatorioFinanceiro));
+router.get('/financeiro', asyncHandler(async (req, res) => {
+  console.log('[ROTA RELATORIO] /financeiro chamada');
+  return relatorioController.relatorioFinanceiro(req, res);
+}));
 
 export default router;

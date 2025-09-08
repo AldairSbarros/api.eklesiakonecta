@@ -14,9 +14,18 @@ async function criarSchema(nomeSchema: string) {
 // Roda as migrations do Prisma no novo schema
 function rodarMigrationsNoSchema(schema: string) {
   const dbUrl = process.env.DATABASE_URL!.replace(/schema=([a-zA-Z0-9_]+)/, `schema=${schema}`);
-  execSync(`npx prisma migrate deploy`, {
-    env: { ...process.env, DATABASE_URL: dbUrl }
-  });
+  console.log(`[MIGRATION] Rodando migrations para schema: ${schema}`);
+  try {
+    const output = execSync(`npx prisma migrate deploy`, {
+      env: { ...process.env, DATABASE_URL: dbUrl },
+      stdio: 'pipe'
+    });
+    console.log(`[MIGRATION] Saída:
+${output.toString()}`);
+  } catch (err: any) {
+    console.error(`[MIGRATION] Erro ao rodar migrations para schema ${schema}:`, err.message, err.stdout?.toString(), err.stderr?.toString());
+    throw new Error(`Erro ao rodar migrations para schema ${schema}: ${err.message}`);
+  }
 }
 
 // Cria o usuário admin no novo schema
@@ -59,7 +68,8 @@ export const createChurch = async (data: any) => {
     throw new Error("A senha deve ter pelo menos 6 caracteres.");
   }
   const senhaParaSalvar = await bcrypt.hash(data.password || "defaultPassword", 10);
-  const nomeSchema = `igreja_${Date.now()}`;
+  // Usa o schema fornecido (para testes/multi-tenant controlado) ou gera um novo
+  const nomeSchema = data.schema && typeof data.schema === 'string' ? data.schema : `igreja_${Date.now()}`;
 
   try {
     await criarSchema(nomeSchema);
@@ -74,8 +84,10 @@ export const createChurch = async (data: any) => {
     throw new Error("Erro ao criar schema ou rodar migrations: " + error.message);
   }
 
+  let novaIgreja;
   try {
-    const novaIgreja = await prismaGlobal.church.create({
+    // Cria no schema global
+    novaIgreja = await prismaGlobal.church.create({
       data: {
         nome: data.nome,
         email: data.email,
@@ -84,14 +96,37 @@ export const createChurch = async (data: any) => {
         status: data.status || "ativa",
       },
     });
-    logAuditoria("Cadastro de igreja", { nome: data.nome, email: data.email });
-    return novaIgreja;
   } catch (error: any) {
     if (error.code === "P2002") {
       throw new Error("E-mail já cadastrado.");
     }
     throw new Error("Erro ao cadastrar igreja: " + error.message);
   }
+
+  // Cria também no schema dinâmico para garantir integridade das FKs
+  try {
+    const prismaTenant = getPrismaTenant(nomeSchema);
+    await prismaTenant.church.create({
+      data: {
+        id: novaIgreja.id, // mesmo id do global
+        nome: novaIgreja.nome,
+        email: novaIgreja.email,
+        password: novaIgreja.password,
+        schema: novaIgreja.schema,
+        status: novaIgreja.status,
+        createdAt: novaIgreja.createdAt,
+        // outros campos opcionais podem ser copiados se necessário
+      },
+    });
+    await prismaTenant.$disconnect();
+  } catch (error: any) {
+    // Se falhar aqui, remove do global para não deixar lixo
+    await prismaGlobal.church.delete({ where: { id: novaIgreja.id } });
+    throw new Error("Erro ao criar igreja no schema dinâmico: " + error.message);
+  }
+
+  logAuditoria("Cadastro de igreja", { nome: data.nome, email: data.email });
+  return novaIgreja;
 };
 
 // Exemplo de função para obter PrismaClient do schema correto

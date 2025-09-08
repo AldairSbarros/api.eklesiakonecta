@@ -22,11 +22,11 @@ export async function registrarLog(
 
 ///////================MOCK==================////////
 
-export function relatorioMensal(relatorioMensal: any): import("express-serve-static-core").RequestHandler<import("express-serve-static-core").ParamsDictionary, any, any, import("qs").ParsedQs, Record<string, any>> {
-    throw new Error('Function not implemented.');
+export function relatorioMensal(req: Request, res: Response) {
+  return res.status(501).json({ error: 'Relatório mensal não implementado.' });
 }
-export function relatorioMensalPDF(relatorioMensalPDF: any): import("express-serve-static-core").RequestHandler<import("express-serve-static-core").ParamsDictionary, any, any, import("qs").ParsedQs, Record<string, any>> {
-    throw new Error('Function not implemented.');
+export function relatorioMensalPDF(req: Request, res: Response) {
+  return res.status(501).json({ error: 'Relatório mensal PDF não implementado.' });
 }
 
 import { Request, Response } from 'express';
@@ -36,7 +36,24 @@ export async function relatorioCelulas(req: Request, res: Response) {
 }
 
 export async function relatorioFinanceiro(req: Request, res: Response) {
-  return res.status(200).json({ message: 'Relatório financeiro OK' });
+  try {
+    const schema = req.headers['schema'] as string;
+    console.log('[RELATORIO FINANCEIRO] HEADER schema:', schema);
+    if (!schema) {
+      console.error('[RELATORIO FINANCEIRO] ERRO: Schema não informado no header.');
+      return res.status(400).json({ error: 'Schema não informado no header.' });
+    }
+    const { getPrismaTenant } = require('../services/church.service');
+    const prisma = getPrismaTenant(schema);
+    // Busca todas as offerings do schema
+    const offerings = await prisma.offering.findMany();
+    const totalOfferings = offerings.reduce((acc: number, o: any) => acc + (o.value || 0), 0);
+    await prisma.$disconnect();
+    return res.status(200).json({ totalOfferings, offerings });
+  } catch (error: any) {
+    console.error('[RELATORIO FINANCEIRO] ERRO:', error);
+    return res.status(404).json({ error: 'Erro ao consultar relatório financeiro', details: error?.message || error });
+  }
 }
 
 export async function relatorioDiscipuladoPorDiscipulador(req: Request, res: Response) {

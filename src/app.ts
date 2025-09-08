@@ -11,6 +11,7 @@ import memberRoutes from './routes/member.routes';
 import offeringRoutes from './routes/offering.routes';
 import usuarioRoutes from './routes/usuario.routes';
 import dashboardRoutes from './routes/dashboard.routes';
+import relatorioRoutes from './routes/relatorio.routes';
 import despesaRoutes from './routes/despesa.routes';
 import authRoutes from './routes/auth.routes';
 import receitaRoutes from './routes/receita.routes';
@@ -134,7 +135,7 @@ app.use('/api/sermoes', sermaoRoutes);
 app.use('/api/enderecos-membro', enderecoMembroRoutes);
 app.use('/api/encontros', encontroRoutes);
 app.use('/api/password', passwordRoutes);
-// app.use('/api/relatorios', relatoriosRoutes);
+app.use('/api/relatorio', relatorioRoutes);
 app.use('/api/auth', authRoutes); // Inclui /api/auth/login, /api/auth/logout, etc
 
 // Rota alternativa de login de usuário

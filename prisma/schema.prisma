@@ -191,11 +191,8 @@ enum PerfilUsuario {
   Tesoureiro
   Secretario
   Pastor
-<<<<<<< HEAD
-=======
   superuser
   SUPERUSER
->>>>>>> 141763c47bccc97b5b7c143a9407e64c2990b451
 }
 model Usuario {
   id              Int          @id @default(autoincrement())

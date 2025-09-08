@@ -17,6 +17,7 @@ export const createMember = async (schema: string, data: any) => {
     data: {
       nome: data.nome,
       congregacaoId,
+      celulaId: data.celulaId,
       telefone: data.telefone,
       email: data.email,
       senha: data.senha,

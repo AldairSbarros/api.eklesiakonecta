@@ -8,7 +8,8 @@ export const create = async (req: Request, res: Response) => {
     const congregacao = await congregacaoService.createCongregacao(schema, req.body);
     res.status(201).json(congregacao);
   } catch (error: any) {
-    res.status(500).json({ error: 'Erro ao criar congregação' });
+    console.error('ERRO CONGREGACAO:', error);
+    res.status(500).json({ error: 'Erro ao criar congregação', details: error?.message || error });
   }
 };
 
