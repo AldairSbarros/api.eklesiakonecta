@@ -1,5 +1,7 @@
+
 import { Router } from 'express';
 import * as encontroController from '../controllers/encontro.controller';
+import { asyncHandler } from '../middleware/asyncHandler';
 
 const router = Router();
 
@@ -18,9 +20,7 @@ const router = Router();
  *       201:
  *         description: Encontro criado com sucesso
  */
-router.post('/', (req, res, next) => {
-  encontroController.create(req, res).catch(next);
-});
+router.post('/', asyncHandler(encontroController.create));
 
 /**
  * @swagger
@@ -31,9 +31,7 @@ router.post('/', (req, res, next) => {
  *       200:
  *         description: Lista de encontros retornada com sucesso
  */
-router.get('/', (req, res, next) => {
-  encontroController.list(req, res).catch(next);
-});
+router.get('/', asyncHandler(encontroController.list));
 
 /**
  * @swagger
@@ -50,9 +48,7 @@ router.get('/', (req, res, next) => {
  *       200:
  *         description: Encontro encontrado com sucesso
  */
-router.get('/:id', (req, res, next) => {
-  encontroController.get(req, res).catch(next);
-});
+router.get('/:id', asyncHandler(encontroController.get));
 
 /**
  * @swagger
@@ -75,9 +71,7 @@ router.get('/:id', (req, res, next) => {
  *       200:
  *         description: Encontro atualizado com sucesso
  */
-router.put('/:id', (req, res, next) => {
-  encontroController.update(req, res).catch(next);
-});
+router.put('/:id', asyncHandler(encontroController.update));
 
 /**
  * @swagger
@@ -94,8 +88,6 @@ router.put('/:id', (req, res, next) => {
  *       204:
  *         description: Encontro removido com sucesso
  */
-router.delete('/:id', (req, res, next) => {
-  encontroController.remove(req, res).catch(next);
-});
+router.delete('/:id', asyncHandler(encontroController.remove));
 
 export default router;

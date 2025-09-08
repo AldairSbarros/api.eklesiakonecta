@@ -60,13 +60,7 @@ export const register = async (req: Request, res: Response) => {
 // Login
 export const login = async (req: Request, res: Response) => {
   try {
-<<<<<<< HEAD
     const schema = extractSchema(req);
-=======
-  const schema = (req.headers['x-church-schema'] || req.headers['schema']) as string;
-  if (!schema) return res.status(400).json({ error: 'Schema não informado no header.' });
-
->>>>>>> 5d75a27 (fix: multi-tenancy completo, todos os controllers usam header x-church-schema ou schema, relatórios reais de células e financeiro)
     const { email, senha } = req.body;
 
     // 1. Tenta autenticar como DevUser (superusuário global)
@@ -76,7 +70,7 @@ export const login = async (req: Request, res: Response) => {
     // 2. Se não há schema, tenta autenticar como admin de igreja (primeiro login)
     if (!schema) {
       try {
-        const igreja = await prisma.church.findUnique({ where: { email } });
+  const igreja = await prisma.church.findFirst({ where: { email } });
         if (igreja) {
           const valid = await bcrypt.compare(senha, igreja.password);
           if (valid) {

@@ -5,17 +5,12 @@ import { extractSchema, validateSchema } from '../utils/headerUtils';
 // Criar congregação
 export const create = async (req: Request, res: Response) => {
   try {
-<<<<<<< HEAD
     const schema = extractSchema(req);
     const validationError = validateSchema(schema);
     if (validationError.error) {
       return res.status(400).json(validationError);
     }
     const congregacao = await congregacaoService.createCongregacao(schema!, req.body);
-=======
-  const schema = (req.headers['x-church-schema'] || req.headers['schema']) as string;
-    const congregacao = await congregacaoService.createCongregacao(schema, req.body);
->>>>>>> 5d75a27 (fix: multi-tenancy completo, todos os controllers usam header x-church-schema ou schema, relatórios reais de células e financeiro)
     res.status(201).json(congregacao);
   } catch (error: any) {
     console.error('ERRO CONGREGACAO:', error);

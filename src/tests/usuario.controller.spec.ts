@@ -1,18 +1,32 @@
+
 import dotenv from 'dotenv';
 dotenv.config();
 import request from 'supertest';
 import app from '../app';
 
-const SCHEMA = 'igreja_1751327431755';
+let SCHEMA: string;
 let token: string;
 
 beforeAll(async () => {
-  // Faça login como admin para obter o token
-  const res = await request(app)
+  // Cria uma igreja e obtém o schema dinâmico
+  const churchRes = await request(app)
+    .post('/api/church')
+    .send({
+      nome: 'Igreja Teste Usuário',
+      email: `igreja_usuario_${Date.now()}@eklesia.app.br`,
+      senha: 'Alsib@2025',
+      cnpj: `${Date.now()}12345`,
+      token: process.env.TOKEN_ADMIN
+    });
+  expect(churchRes.status).toBe(201);
+  SCHEMA = churchRes.body.schema;
+  // Faz login como admin da igreja criada
+  const loginRes = await request(app)
     .post('/api/auth/login')
     .set('schema', SCHEMA)
-    .send({ email: 'aldairbarros@eklesia.app.br', senha: 'Alsib@2025' });
-  token = res.body.token;
+    .send({ email: churchRes.body.email, senha: 'Alsib@2025' });
+  expect(loginRes.status).toBe(200);
+  token = loginRes.body.token;
 });
 
 describe('Usuário Controller', () => {
@@ -26,7 +40,7 @@ describe('Usuário Controller', () => {
         email: `aldairbarros${Date.now()}@eklesia.app.br`,
         senha: 'Alsib@2025',
         perfil: 'ADMIN',
-        token: process.env.TOKEN_ADMIN // <-- Adicione isso!
+        token: process.env.TOKEN_ADMIN
       });
     expect(res.status).toBe(201);
     expect(res.body).toHaveProperty('id');
@@ -42,21 +56,20 @@ describe('Usuário Controller', () => {
   });
 
   it('deve autenticar um usuário e retornar token', async () => {
-    const email = `aldairbarros${Date.now()}@ekelsia.app.br`;
+    const email = `aldairbarros${Date.now()}@eklesia.app.br`;
     // Cadastra o usuário
-   const resCadastro = await request(app)
-  .post('/api/usuarios')
-  .set('schema', SCHEMA)
-  .set('Authorization', `Bearer ${token}`)
-  .send({
-    nome: 'Aldair Barros',
-    email,
-    senha: 'Alsib@2025',
-    perfil: 'ADMIN',
-    token: process.env.TOKEN_ADMIN // <-- Adicione aqui!
-  });
-
-    console.log('Cadastro:', resCadastro.status, resCadastro.body);
+    const resCadastro = await request(app)
+      .post('/api/usuarios')
+      .set('schema', SCHEMA)
+      .set('Authorization', `Bearer ${token}`)
+      .send({
+        nome: 'Aldair Barros',
+        email,
+        senha: 'Alsib@2025',
+        perfil: 'ADMIN',
+        token: process.env.TOKEN_ADMIN
+      });
+    expect(resCadastro.status).toBe(201);
     // Faz login
     const res = await request(app)
       .post('/api/auth/login')

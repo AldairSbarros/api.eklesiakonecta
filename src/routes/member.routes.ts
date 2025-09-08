@@ -1,7 +1,9 @@
 import { Router, Request, Response } from 'express';
 import * as memberController from '../controllers/member.controller';
+
 import { autenticarJWT } from '../middleware/autenticarJWT';
 import { autorizarRoles } from '../middleware/autorizarRoles';
+import { asyncHandler } from '../middleware/asyncHandler';
 
 const router = Router();
 
@@ -20,7 +22,7 @@ const router = Router();
  *       201:
  *         description: Membro criado com sucesso
  */
-router.post('/', memberController.create);
+router.post('/', asyncHandler(memberController.create));
 
 /**
  * @swagger
@@ -31,7 +33,7 @@ router.post('/', memberController.create);
  *       200:
  *         description: Lista de membros retornada com sucesso
  */
-router.get('/', memberController.list);
+router.get('/', asyncHandler(memberController.list));
 
 /**
  * @swagger
@@ -73,7 +75,7 @@ router.get('/:id', (req, res, next) => {
  *       200:
  *         description: Membro atualizado com sucesso
  */
-router.put('/:id', memberController.update);
+router.put('/:id', asyncHandler(memberController.update));
 
 /**
  * @swagger
@@ -90,7 +92,7 @@ router.put('/:id', memberController.update);
  *       204:
  *         description: Membro removido com sucesso
  */
-router.delete('/:id', memberController.remove);
+router.delete('/:id', asyncHandler(memberController.remove));
 
 /**
  * @swagger
