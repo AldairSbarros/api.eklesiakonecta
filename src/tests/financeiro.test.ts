@@ -9,28 +9,26 @@ describe('Financeiro', () => {
   let memberId: number;
 
   beforeAll(async () => {
-    // Login no schema global com usuário correto
-    const loginRes = await request(app)
-      .post('/api/auth/login')
-      .set('schema', 'public')
-      .send({ email: 'aldairbarros@eklesia.app.br', senha: 'Alsib@2025' });
-    token = loginRes.body.token;
-
-    // Crie uma igreja no schema global
+    // Cria uma igreja dinâmica
     const email = `igreja${Date.now()}@teste.com`;
-    schemaCliente = `igreja_${Date.now()}`;
     const resIgreja = await request(app)
       .post('/api/igrejas')
-      .set('schema', 'public')
-      .set('Authorization', `Bearer ${token}`)
       .send({
         nome: 'Igreja Teste',
         email,
         password: 'SenhaForte123',
-        schema: schemaCliente,
         endereco: 'Rua Teste, 123'
       });
+    expect(resIgreja.status).toBe(201);
+    schemaCliente = resIgreja.body.igreja.schema;
     churchId = resIgreja.body.igreja.id;
+    // Login como admin da igreja criada
+    const resLogin = await request(app)
+      .post('/api/auth/login')
+      .set('schema', schemaCliente)
+      .send({ email, senha: 'SenhaForte123' });
+    expect(resLogin.status).toBe(200);
+    token = resLogin.body.token;
 
     // Crie uma congregação no novo schema
     const resCong = await request(app)
@@ -38,6 +36,7 @@ describe('Financeiro', () => {
       .set('schema', schemaCliente)
       .set('Authorization', `Bearer ${token}`)
       .send({ nome: 'Congregação Teste', churchId, endereco: 'Rua Teste' });
+    expect(resCong.status).toBe(201);
     congregacaoId = resCong.body.id;
 
     // Crie um membro no novo schema
@@ -50,8 +49,9 @@ describe('Financeiro', () => {
         email: `membro${Date.now()}@teste.com`,
         congregacaoId
       });
+    expect(resMembro.status).toBe(201);
     memberId = resMembro.body.id;
-  }, 30000); // Increased timeout to 30 seconds
+  }, 30000);
 
   it('deve cadastrar uma oferta', async () => {
     const res = await request(app)

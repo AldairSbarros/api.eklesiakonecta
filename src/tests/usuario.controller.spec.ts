@@ -9,22 +9,24 @@ let token: string;
 
 beforeAll(async () => {
   // Cria uma igreja e obtém o schema dinâmico
+  const emailIgreja = `igreja_usuario_${Date.now()}@eklesia.app.br`;
   const churchRes = await request(app)
-    .post('/api/church')
+    .post('/api/igrejas')
     .send({
       nome: 'Igreja Teste Usuário',
-      email: `igreja_usuario_${Date.now()}@eklesia.app.br`,
-      senha: 'Alsib@2025',
+      email: emailIgreja,
+      password: 'Alsib@2025',
       cnpj: `${Date.now()}12345`,
       token: process.env.TOKEN_ADMIN
     });
+  console.log('churchRes.body:', churchRes.body);
   expect(churchRes.status).toBe(201);
-  SCHEMA = churchRes.body.schema;
+  SCHEMA = churchRes.body.igreja?.schema;
   // Faz login como admin da igreja criada
   const loginRes = await request(app)
     .post('/api/auth/login')
     .set('schema', SCHEMA)
-    .send({ email: churchRes.body.email, senha: 'Alsib@2025' });
+    .send({ email: emailIgreja, senha: 'Alsib@2025' });
   expect(loginRes.status).toBe(200);
   token = loginRes.body.token;
 });

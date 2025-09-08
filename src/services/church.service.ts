@@ -64,10 +64,11 @@ export const createChurch = async (data: any) => {
   if (erros.length > 0) {
     throw new Error(erros.join(" "));
   }
-  if (data.password && data.password.length < 6) {
+  const senhaAdmin = data.senhaAdmin || data.password;
+  if (!senhaAdmin || senhaAdmin.length < 6) {
     throw new Error("A senha deve ter pelo menos 6 caracteres.");
   }
-  const senhaParaSalvar = await bcrypt.hash(data.password || "defaultPassword", 10);
+  const senhaParaSalvar = await bcrypt.hash(senhaAdmin, 10);
   // Usa o schema fornecido (para testes/multi-tenant controlado) ou gera um novo
   const nomeSchema = data.schema && typeof data.schema === 'string' ? data.schema : `igreja_${Date.now()}`;
 
