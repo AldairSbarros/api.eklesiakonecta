@@ -8,10 +8,16 @@ import path from 'path';
 export const create = async (req: Request, res: Response): Promise<void> => {
   try {
     console.log('BODY RECEBIDO:', req.body)
+<<<<<<< HEAD
     const schema = extractSchema(req);
     const validationError = validateSchema(schema);
     if (validationError.error) {
       res.status(400).json(validationError);
+=======
+  const schema = (req.headers['x-church-schema'] || req.headers['schema']) as string;
+    if (!schema) {
+      res.status(400).json({ error: 'Schema não informado no header.' });
+>>>>>>> 5d75a27 (fix: multi-tenancy completo, todos os controllers usam header x-church-schema ou schema, relatórios reais de células e financeiro)
       return;
     }
     // Aceita os campos do seu teste
@@ -44,7 +50,7 @@ export const create = async (req: Request, res: Response): Promise<void> => {
 // READ ALL
 export const list = async (req: Request, res: Response): Promise<void> => {
   try {
-    const schema = req.headers['schema'] as string;
+  const schema = (req.headers['x-church-schema'] || req.headers['schema']) as string;
     if (!schema) {
       res.status(400).json({ error: 'Schema não informado no header.' });
       return;
@@ -71,7 +77,7 @@ export const list = async (req: Request, res: Response): Promise<void> => {
 // READ ONE
 export const get = async (req: Request, res: Response): Promise<void> => {
   try {
-    const schema = req.headers['schema'] as string;
+  const schema = (req.headers['x-church-schema'] || req.headers['schema']) as string;
     if (!schema) {
       res.status(400).json({ error: 'Schema não informado no header.' });
       return;
@@ -91,7 +97,7 @@ export const get = async (req: Request, res: Response): Promise<void> => {
 // UPDATE
 export const update = async (req: Request, res: Response): Promise<void> => {
   try {
-    const schema = req.headers['schema'] as string;
+  const schema = (req.headers['x-church-schema'] || req.headers['schema']) as string;
     if (!schema) {
       res.status(400).json({ error: 'Schema não informado no header.' });
       return;
@@ -108,7 +114,7 @@ export const update = async (req: Request, res: Response): Promise<void> => {
 // DELETE
 export const remove = async (req: Request, res: Response): Promise<void> => {
   try {
-    const schema = req.headers['schema'] as string;
+  const schema = (req.headers['x-church-schema'] || req.headers['schema']) as string;
     if (!schema) {
       res.status(400).json({ error: 'Schema não informado no header.' });
       return;
@@ -124,7 +130,7 @@ export const remove = async (req: Request, res: Response): Promise<void> => {
 // UPDATE RECEIPT PHOTO
 export const updateReceiptPhoto = async (req: Request, res: Response): Promise<void> => {
   try {
-    const schema = req.headers['schema'] as string;
+    const schema = (req.headers['x-church-schema'] || req.headers['schema']) as string;
     if (!schema) {
       res.status(400).json({ error: 'Schema não informado no header.' });
       return;
@@ -141,7 +147,7 @@ export const updateReceiptPhoto = async (req: Request, res: Response): Promise<v
 // DELETE RECEIPT PHOTO
 export const deleteReceiptPhoto = async (req: Request, res: Response): Promise<void> => {
   try {
-    const schema = req.headers['schema'] as string;
+    const schema = (req.headers['x-church-schema'] || req.headers['schema']) as string;
     if (!schema) {
       res.status(400).json({ error: 'Schema não informado no header.' });
       return;
@@ -168,7 +174,7 @@ export const deleteReceiptPhoto = async (req: Request, res: Response): Promise<v
 // LIST RECEIPTS
 export const listReceipts = async (req: Request, res: Response): Promise<void> => {
   try {
-    const schema = req.headers['schema'] as string;
+    const schema = (req.headers['x-church-schema'] || req.headers['schema']) as string;
     if (!schema) {
       res.status(400).json({ error: 'Schema não informado no header.' });
       return;

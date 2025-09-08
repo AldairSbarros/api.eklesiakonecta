@@ -27,8 +27,8 @@ export const tryDevUserAuth = async (email: string, senha: string, res: Response
 // Cadastro
 export const register = async (req: Request, res: Response) => {
   try {
-    const schema = req.headers['schema'] as string;
-    if (!schema) return res.status(400).json({ error: 'Schema não informado no header.' });
+  const schema = (req.headers['x-church-schema'] || req.headers['schema']) as string;
+  if (!schema) return res.status(400).json({ error: 'Schema não informado no header.' });
 
     const { nome, email, senha, perfil, congregacaoId } = req.body;
     if (!nome || !email || !senha || !perfil) {
@@ -60,7 +60,13 @@ export const register = async (req: Request, res: Response) => {
 // Login
 export const login = async (req: Request, res: Response) => {
   try {
+<<<<<<< HEAD
     const schema = extractSchema(req);
+=======
+  const schema = (req.headers['x-church-schema'] || req.headers['schema']) as string;
+  if (!schema) return res.status(400).json({ error: 'Schema não informado no header.' });
+
+>>>>>>> 5d75a27 (fix: multi-tenancy completo, todos os controllers usam header x-church-schema ou schema, relatórios reais de células e financeiro)
     const { email, senha } = req.body;
 
     // 1. Tenta autenticar como DevUser (superusuário global)

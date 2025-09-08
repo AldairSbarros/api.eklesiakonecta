@@ -48,6 +48,7 @@ describe('Multi-tenancy: fluxo completo e isolamento', () => {
     // Login A
     const loginA = await request(app)
       .post('/api/auth/login')
+      .set('x-church-schema', schemaA)
       .send({ email: emailA, senha: password });
     console.log('LOGIN A STATUS:', loginA.status, loginA.body);
     expect(loginA.status).toBe(200);
@@ -56,6 +57,7 @@ describe('Multi-tenancy: fluxo completo e isolamento', () => {
     // Login B
     const loginB = await request(app)
       .post('/api/auth/login')
+      .set('x-church-schema', schemaB)
       .send({ email: emailB, senha: password });
     console.log('LOGIN B STATUS:', loginB.status, loginB.body);
     expect(loginB.status).toBe(200);
@@ -67,7 +69,7 @@ describe('Multi-tenancy: fluxo completo e isolamento', () => {
     const resCongA = await request(app)
       .post('/api/congregacoes')
       .set('Authorization', `Bearer ${tokenA}`)
-      .set('X-Church-Schema', schemaA)
+  .set('x-church-schema', schemaA)
       .send({ nome: 'Congregação A', churchId: igrejaA.id, endereco: 'Rua 1' });
     expect(resCongA.status).toBe(201);
     congregacaoA = resCongA.body;
@@ -76,7 +78,7 @@ describe('Multi-tenancy: fluxo completo e isolamento', () => {
     const resCongB = await request(app)
       .post('/api/congregacoes')
       .set('Authorization', `Bearer ${tokenB}`)
-      .set('X-Church-Schema', schemaB)
+  .set('x-church-schema', schemaB)
       .send({ nome: 'Congregação B', churchId: igrejaB.id, endereco: 'Rua 2' });
     expect(resCongB.status).toBe(201);
     congregacaoB = resCongB.body;
@@ -85,7 +87,7 @@ describe('Multi-tenancy: fluxo completo e isolamento', () => {
     const resCelA = await request(app)
       .post('/api/celulas')
       .set('Authorization', `Bearer ${tokenA}`)
-      .set('X-Church-Schema', schemaA)
+  .set('x-church-schema', schemaA)
       .send({ nome: 'Célula A', congregacaoId: congregacaoA.id });
     expect(resCelA.status).toBe(201);
     celulaA = resCelA.body;
@@ -94,7 +96,7 @@ describe('Multi-tenancy: fluxo completo e isolamento', () => {
     const resCelB = await request(app)
       .post('/api/celulas')
       .set('Authorization', `Bearer ${tokenB}`)
-      .set('X-Church-Schema', schemaB)
+  .set('x-church-schema', schemaB)
       .send({ nome: 'Célula B', congregacaoId: congregacaoB.id });
     expect(resCelB.status).toBe(201);
     celulaB = resCelB.body;
@@ -103,7 +105,7 @@ describe('Multi-tenancy: fluxo completo e isolamento', () => {
     const resMembroA = await request(app)
       .post('/api/membros')
       .set('Authorization', `Bearer ${tokenA}`)
-      .set('X-Church-Schema', schemaA)
+  .set('x-church-schema', schemaA)
       .send({ nome: 'Membro A', email: `membroA${Date.now()}@teste.com`, congregacaoId: congregacaoA.id, celulaId: celulaA.id });
     expect(resMembroA.status).toBe(201);
     membroA = resMembroA.body;
@@ -112,7 +114,7 @@ describe('Multi-tenancy: fluxo completo e isolamento', () => {
     const resMembroB = await request(app)
       .post('/api/membros')
       .set('Authorization', `Bearer ${tokenB}`)
-      .set('X-Church-Schema', schemaB)
+  .set('x-church-schema', schemaB)
       .send({ nome: 'Membro B', email: `membroB${Date.now()}@teste.com`, congregacaoId: congregacaoB.id, celulaId: celulaB.id });
     expect(resMembroB.status).toBe(201);
     membroB = resMembroB.body;
@@ -123,7 +125,7 @@ describe('Multi-tenancy: fluxo completo e isolamento', () => {
     const resOffA = await request(app)
       .post('/api/offerings')
       .set('Authorization', `Bearer ${tokenA}`)
-      .set('X-Church-Schema', schemaA)
+  .set('x-church-schema', schemaA)
       .send({ type: 'dizimo', valor: 100, data: new Date().toISOString(), congregacaoId: congregacaoA.id, memberId: membroA.id });
     expect(resOffA.status).toBe(201);
     offeringA = resOffA.body;
@@ -132,7 +134,7 @@ describe('Multi-tenancy: fluxo completo e isolamento', () => {
     const resOffB = await request(app)
       .post('/api/offerings')
       .set('Authorization', `Bearer ${tokenB}`)
-      .set('X-Church-Schema', schemaB)
+  .set('x-church-schema', schemaB)
       .send({ type: 'oferta', valor: 50, data: new Date().toISOString(), congregacaoId: congregacaoB.id, memberId: membroB.id, celulaId: celulaB.id });
     expect(resOffB.status).toBe(201);
     offeringB = resOffB.body;

@@ -5,12 +5,18 @@ import { extractSchema, validateSchema } from '../utils/headerUtils';
 // Criar célula
 export const create = async (req: Request, res: Response) => {
   try {
+<<<<<<< HEAD
     const schema = extractSchema(req);
     const validationError = validateSchema(schema);
     if (validationError.error) {
       return res.status(400).json(validationError);
     }
     const celula = await celulaService.createCelula(schema!, req.body);
+=======
+  const schema = (req.headers['x-church-schema'] || req.headers['schema']) as string;
+    if (!schema) return res.status(400).json({ error: 'Schema não informado no header.' });
+    const celula = await celulaService.createCelula(schema, req.body);
+>>>>>>> 5d75a27 (fix: multi-tenancy completo, todos os controllers usam header x-church-schema ou schema, relatórios reais de células e financeiro)
     res.status(201).json(celula);
   } catch (error: any) {
     res.status(400).json({ error: error.message });
@@ -19,7 +25,7 @@ export const create = async (req: Request, res: Response) => {
 
 export const atualizarLocalizacao = async (req: Request, res: Response) => {
   try {
-    const schema = req.headers['schema'] as string;
+  const schema = (req.headers['x-church-schema'] || req.headers['schema']) as string;
     if (!schema) return res.status(400).json({ error: 'Schema não informado no header.' });
     const { id } = req.params;
     const { latitude, longitude } = req.body;
@@ -34,7 +40,7 @@ export const atualizarLocalizacao = async (req: Request, res: Response) => {
 // Listar células
 export const list = async (req: Request, res: Response) => {
   try {
-    const schema = req.headers['schema'] as string;
+  const schema = (req.headers['x-church-schema'] || req.headers['schema']) as string;
     if (!schema) return res.status(400).json({ error: 'Schema não informado no header.' });
     const celulas = await celulaService.listCelulas(schema);
     res.json(celulas);
@@ -46,7 +52,7 @@ export const list = async (req: Request, res: Response) => {
 // Obter célula por ID
 export const get = async (req: Request, res: Response) => {
   try {
-    const schema = req.headers['schema'] as string;
+  const schema = (req.headers['x-church-schema'] || req.headers['schema']) as string;
     if (!schema) return res.status(400).json({ error: 'Schema não informado no header.' });
     const { id } = req.params;
     const celula = await celulaService.getCelula(schema, Number(id));
@@ -60,7 +66,7 @@ export const get = async (req: Request, res: Response) => {
 // Atualizar célula
 export const update = async (req: Request, res: Response) => {
   try {
-    const schema = req.headers['schema'] as string;
+  const schema = (req.headers['x-church-schema'] || req.headers['schema']) as string;
     if (!schema) return res.status(400).json({ error: 'Schema não informado no header.' });
     const { id } = req.params;
     const celula = await celulaService.updateCelula(schema, Number(id), req.body);

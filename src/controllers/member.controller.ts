@@ -5,12 +5,17 @@ import { extractSchema, validateSchema } from '../utils/headerUtils';
 // CREATE
 export const create = async (req: Request, res: Response) => {
   try {
+<<<<<<< HEAD
     const schema = extractSchema(req);
     const validationError = validateSchema(schema);
     if (validationError.error) {
       return res.status(400).json(validationError);
     }
     const member = await memberService.createMember(schema!, req.body);
+=======
+  const schema = (req.headers['x-church-schema'] || req.headers['schema']) as string;
+    const member = await memberService.createMember(schema, req.body);
+>>>>>>> 5d75a27 (fix: multi-tenancy completo, todos os controllers usam header x-church-schema ou schema, relatórios reais de células e financeiro)
     res.status(201).json(member);
   } catch (error: any) {
     res.status(400).json({ error: error.message });
@@ -20,7 +25,7 @@ export const create = async (req: Request, res: Response) => {
 // READ ALL
 export const list = async (req: Request, res: Response) => {
   try {
-    const schema = req.headers['schema'] as string;
+  const schema = (req.headers['x-church-schema'] || req.headers['schema']) as string;
     const { congregacaoId } = req.query;
     const members = await memberService.listMembers(schema, congregacaoId ? Number(congregacaoId) : undefined);
     res.json(members);
@@ -32,7 +37,7 @@ export const list = async (req: Request, res: Response) => {
 // READ ONE
 export const get = async (req: Request, res: Response) => {
   try {
-    const schema = req.headers['schema'] as string;
+  const schema = (req.headers['x-church-schema'] || req.headers['schema']) as string;
     const { id } = req.params;
     const member = await memberService.getMember(schema, Number(id));
     if (!member) return res.status(404).json({ error: 'Membro não encontrado.' });
@@ -45,7 +50,7 @@ export const get = async (req: Request, res: Response) => {
 // UPDATE
 export const update = async (req: Request, res: Response) => {
   try {
-    const schema = req.headers['schema'] as string;
+  const schema = (req.headers['x-church-schema'] || req.headers['schema']) as string;
     const { id } = req.params;
     const member = await memberService.updateMember(schema, Number(id), req.body);
     res.json(member);
@@ -57,8 +62,8 @@ export const update = async (req: Request, res: Response) => {
 // Atualizar geolocalização do membro
 export const atualizarLocalizacao = async (req: Request, res: Response) => {
   try {
-    const schema = req.headers['schema'] as string;
-    if (!schema) return res.status(400).json({ error: 'Schema não informado no header.' });
+  const schema = (req.headers['x-church-schema'] || req.headers['schema']) as string;
+  if (!schema) return res.status(400).json({ error: 'Schema não informado no header.' });
     const { id } = req.params;
     const { latitude, longitude } = req.body;
     const member = await memberService.updateMember(schema, Number(id), { latitude, longitude });
@@ -71,7 +76,7 @@ export const atualizarLocalizacao = async (req: Request, res: Response) => {
 // DELETE
 export const remove = async (req: Request, res: Response) => {
   try {
-    const schema = req.headers['schema'] as string;
+  const schema = (req.headers['x-church-schema'] || req.headers['schema']) as string;
     const { id } = req.params;
     await memberService.deleteMember(schema, Number(id));
     res.json({ message: 'Membro removido com sucesso.' });

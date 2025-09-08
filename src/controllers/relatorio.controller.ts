@@ -32,7 +32,19 @@ export function relatorioMensalPDF(req: Request, res: Response) {
 }
 
 export async function relatorioCelulas(req: Request, res: Response) {
-  return res.status(200).json({ message: 'Relatório de células OK' });
+  try {
+    const schema = extractSchema(req);
+    const validationError = validateSchema(schema);
+    if (validationError.error) {
+      return res.status(400).json(validationError);
+    }
+    // Busca todas as células do schema, incluindo membros
+    const { listCelulas } = require('../services/celula.service');
+    const celulas = await listCelulas(schema!);
+    return res.status(200).json({ celulas });
+  } catch (error: any) {
+    return res.status(500).json({ error: error.message });
+  }
 }
 
 export async function relatorioFinanceiro(req: Request, res: Response) {
