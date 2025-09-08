@@ -3,6 +3,7 @@ import * as authService from '../services/auth.service';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { PrismaClient } from '@prisma/client';
+import { extractSchema } from '../utils/headerUtils';
 
 const prisma = new PrismaClient();
 
@@ -59,16 +60,44 @@ export const register = async (req: Request, res: Response) => {
 // Login
 export const login = async (req: Request, res: Response) => {
   try {
-    const schema = req.headers['schema'] as string;
-    if (!schema) return res.status(400).json({ error: 'Schema não informado no header.' });
-
+    const schema = extractSchema(req);
     const { email, senha } = req.body;
 
     // 1. Tenta autenticar como DevUser (superusuário global)
     const devUserResult = await tryDevUserAuth(email, senha, res);
     if (devUserResult) return; // Se autenticou como DevUser, já respondeu
 
-    // 2. Fluxo normal para usuários comuns
+    // 2. Se não há schema, tenta autenticar como admin de igreja (primeiro login)
+    if (!schema) {
+      try {
+        const igreja = await prisma.church.findUnique({ where: { email } });
+        if (igreja) {
+          const valid = await bcrypt.compare(senha, igreja.password);
+          if (valid) {
+            const token = jwt.sign(
+              { id: igreja.id, perfil: 'ADMIN', email: igreja.email, schema: igreja.schema },
+              secret,
+              { expiresIn: '7d' }
+            );
+            return res.json({
+              token,
+              usuario: {
+                id: igreja.id,
+                nome: igreja.nome,
+                email: igreja.email,
+                perfil: 'ADMIN',
+                schema: igreja.schema
+              }
+            });
+          }
+        }
+      } catch (error) {
+        console.error('Erro ao tentar login como igreja:', error);
+      }
+      return res.status(400).json({ error: 'Schema não informado no header.' });
+    }
+
+    // 3. Fluxo normal para usuários comuns
     const usuario = await authService.findUsuarioByEmail(schema, email);
     if (!usuario) {
       res.status(401).json({ error: 'Usuário ou senha inválidos.' });

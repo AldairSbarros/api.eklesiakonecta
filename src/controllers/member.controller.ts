@@ -1,11 +1,16 @@
 import { Request, Response } from 'express';
 import * as memberService from '../services/member.service';
+import { extractSchema, validateSchema } from '../utils/headerUtils';
 
 // CREATE
 export const create = async (req: Request, res: Response) => {
   try {
-    const schema = req.headers['schema'] as string;
-    const member = await memberService.createMember(schema, req.body);
+    const schema = extractSchema(req);
+    const validationError = validateSchema(schema);
+    if (validationError.error) {
+      return res.status(400).json(validationError);
+    }
+    const member = await memberService.createMember(schema!, req.body);
     res.status(201).json(member);
   } catch (error: any) {
     res.status(400).json({ error: error.message });

@@ -1,12 +1,16 @@
 import { Request, Response } from 'express';
 import * as celulaService from '../services/celula.service';
+import { extractSchema, validateSchema } from '../utils/headerUtils';
 
 // Criar célula
 export const create = async (req: Request, res: Response) => {
   try {
-    const schema = req.headers['schema'] as string;
-    if (!schema) return res.status(400).json({ error: 'Schema não informado no header.' });
-    const celula = await celulaService.createCelula(schema, req.body);
+    const schema = extractSchema(req);
+    const validationError = validateSchema(schema);
+    if (validationError.error) {
+      return res.status(400).json(validationError);
+    }
+    const celula = await celulaService.createCelula(schema!, req.body);
     res.status(201).json(celula);
   } catch (error: any) {
     res.status(400).json({ error: error.message });

@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import * as offeringService from '../services/offering.service';
+import { extractSchema, validateSchema } from '../utils/headerUtils';
 import fs from 'fs';
 import path from 'path';
 
@@ -7,9 +8,10 @@ import path from 'path';
 export const create = async (req: Request, res: Response): Promise<void> => {
   try {
     console.log('BODY RECEBIDO:', req.body)
-    const schema = req.headers['schema'] as string;
-    if (!schema) {
-      res.status(400).json({ error: 'Schema não informado no header.' });
+    const schema = extractSchema(req);
+    const validationError = validateSchema(schema);
+    if (validationError.error) {
+      res.status(400).json(validationError);
       return;
     }
     // Aceita os campos do seu teste
@@ -22,7 +24,7 @@ export const create = async (req: Request, res: Response): Promise<void> => {
 }
 
     // Criação da oferta/dízimo
-    const offering = await offeringService.createOffering(schema, {
+    const offering = await offeringService.createOffering(schema!, {
   value: valor,
   date: new Date(data),
   memberId: memberId,

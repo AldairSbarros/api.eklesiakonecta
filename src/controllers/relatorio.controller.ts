@@ -1,4 +1,6 @@
 import { getPrisma } from "../utils/prismaDynamic";
+import { Request, Response } from 'express';
+import { extractSchema, validateSchema } from '../utils/headerUtils';
 
 export async function registrarLog(
   schema: string,
@@ -29,22 +31,21 @@ export function relatorioMensalPDF(req: Request, res: Response) {
   return res.status(501).json({ error: 'Relatório mensal PDF não implementado.' });
 }
 
-import { Request, Response } from 'express';
-
 export async function relatorioCelulas(req: Request, res: Response) {
   return res.status(200).json({ message: 'Relatório de células OK' });
 }
 
 export async function relatorioFinanceiro(req: Request, res: Response) {
   try {
-    const schema = req.headers['schema'] as string;
+    const schema = extractSchema(req);
+    const validationError = validateSchema(schema);
     console.log('[RELATORIO FINANCEIRO] HEADER schema:', schema);
-    if (!schema) {
+    if (validationError.error) {
       console.error('[RELATORIO FINANCEIRO] ERRO: Schema não informado no header.');
-      return res.status(400).json({ error: 'Schema não informado no header.' });
+      return res.status(400).json(validationError);
     }
     const { getPrismaTenant } = require('../services/church.service');
-    const prisma = getPrismaTenant(schema);
+    const prisma = getPrismaTenant(schema!);
     // Busca todas as offerings do schema
     const offerings = await prisma.offering.findMany();
     const totalOfferings = offerings.reduce((acc: number, o: any) => acc + (o.value || 0), 0);
