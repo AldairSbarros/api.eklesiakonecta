@@ -2,27 +2,33 @@
 # Arquivos de ambiente e backups (NUNCA versionar)
 .env
 .env.*
-*.env
-*.env.*
+.env
+.env.*
 .env.bkp
 .env.local
 .env_localhost.bkp
-=======
->>>>>>> 141763c47bccc97b5b7c143a9407e64c2990b451
-node_modules
-# Keep environment variables out of version control
-.env
+uploads/
+uploads/comprovantes/
+uploads/desconhecida/
+# Ignore backup files
+*.bkp
+# Ignore database files
+*.sqlite
+# Ignore logs
+*.log
+# Ignore node_modules
+node_modules/
+# Ignore dist
+dist/
+# Ignore coverage
 coverage/
-backups/
-
-uploads/comprovantes/.env_render
-.env_render
-.env.local
-.env.bkp 
-.env.example
-.env*
-<<<<<<< HEAD
-=======
-eklesia.zip
-eklesia.zip
->>>>>>> 141763c47bccc97b5b7c143a9407e64c2990b451
+# Ignore prisma generated files
+prisma/dev.db
+prisma/dev.db-journal
+# Ignore VSCode settings
+.vscode/
+# Ignore system files
+.DS_Store
+Thumbs.db
+# Ignore public pdfs
+public/pdfs/
