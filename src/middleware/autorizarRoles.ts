@@ -6,6 +6,10 @@ export function autorizarRoles(rolesPermitidos: string[]) {
     // Padronize para maiúsculo
     const perfil = user?.perfil?.toUpperCase();
     const roles = rolesPermitidos.map(r => r.toUpperCase());
+    // Permite superuser acessar qualquer rota
+    if (user?.superuser === true) {
+      return next();
+    }
     if (!user || !roles.includes(perfil)) {
       res.status(403).json({ error: "Acesso negado." });
       return;

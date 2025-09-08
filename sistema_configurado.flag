@@ -1,9 +1,9 @@
 {
   "configurado": true,
-  "dataConfiguracao": "2025-07-19T22:58:29.991Z",
+  "dataConfiguracao": "2025-09-08T14:37:22.730Z",
   "primeiraIgreja": {
-    "nome": "Igreja Evangelica Assembleia de Deus no Amazonas - IEADAM",
-    "schema": "ieadam_1752965901147",
-    "email": "ieadam@eklesia.app.br"
+    "nome": "Igreja Cadastro Inicial 1757342239779",
+    "schema": "igreja_cadastro_inic_1757342239786",
+    "email": "pastor1757342239779@teste.com"
   }
 }
