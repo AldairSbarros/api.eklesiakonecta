@@ -26,8 +26,6 @@ const router = Router();
  */
 router.post(
   "/",
-  autenticarJWT,
-  autorizarRoles(["ADMIN"]),
   validarCadastroIgreja,
   handleValidation,
   churchController.create
