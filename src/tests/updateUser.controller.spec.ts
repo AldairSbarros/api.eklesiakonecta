@@ -1,38 +1,57 @@
 import request from 'supertest';
 import app from '../app';
 
-const SCHEMA = 'igreja_1751327431755';
+let SCHEMA: string;
 let token: string;
 
-beforeAll(async () => {
-  const res = await request(app)
-    .post('/api/auth/login')
-    .set('schema', SCHEMA)
-    .send({ email: 'admin2@teste.com', senha: '123456' });
-  token = res.body.token;
-});
+describe('Update User Controller', () => {
+  beforeAll(async () => {
+    // Cria uma igreja e obtém o schema dinâmico
+    const emailIgreja = `igreja_updateuser_${Date.now()}@eklesia.app.br`;
+    const churchRes = await request(app)
+      .post('/api/igrejas')
+      .send({
+        nome: 'Igreja Teste UpdateUser',
+        email: emailIgreja,
+        senhaAdmin: 'Alsib@2025',
+        endereco: 'Rua dos Usuários, 123',
+      });
+    console.log('CHURCH RESPONSE:', churchRes.status, churchRes.body);
+    expect(churchRes.status).toBe(201);
+    SCHEMA = churchRes.body.igreja?.schema;
+    // Faz login como admin da igreja criada
+    const loginRes = await request(app)
+      .post('/api/auth/login')
+      .set('schema', SCHEMA)
+      .send({ email: emailIgreja, senha: 'Alsib@2025' });
+    console.log('LOGIN RESPONSE:', loginRes.status, loginRes.body);
+    expect(loginRes.status).toBe(200);
+    token = loginRes.body.token;
+  });
 
-it('deve atualizar um usuário', async () => {
-  const email = `update${Date.now()}@teste.com`;
-  const resCadastro = await request(app)
-    .post('/api/usuarios')
-    .set('schema', SCHEMA)
-    .set('Authorization', `Bearer ${token}`)
-    .send({
-      nome: 'Usuário Update',
-      email,
-      senha: '123456',
-      perfil: 'ADMIN',
-      token: process.env.TOKEN_ADMIN
-    });
-  const userId = resCadastro.body.id;
+  it('deve atualizar um usuário', async () => {
+    const email = `update${Date.now()}@teste.com`;
+    const resCadastro = await request(app)
+      .post('/api/usuarios')
+      .set('schema', SCHEMA)
+      .set('Authorization', `Bearer ${token}`)
+      .send({
+        nome: 'Usuário Update',
+        email,
+        senha: 'Alsib@2025',
+        perfil: 'ADMIN',
+      });
+    console.log('CADASTRO USUÁRIO RESPONSE:', resCadastro.status, resCadastro.body);
+    expect(resCadastro.status).toBe(201);
+    const userId = resCadastro.body.id;
 
-  const resUpdate = await request(app)
-    .put(`/api/usuarios/${userId}`)
-    .set('schema', SCHEMA)
-    .set('Authorization', `Bearer ${token}`)
-    .send({ nome: 'Usuário Atualizado' });
+    const resUpdate = await request(app)
+      .put(`/api/usuarios/${userId}`)
+      .set('schema', SCHEMA)
+      .set('Authorization', `Bearer ${token}`)
+      .send({ nome: 'Usuário Atualizado' });
 
-  expect(resUpdate.status).toBe(200);
-  expect(resUpdate.body.nome).toBe('Usuário Atualizado');
+    expect(resUpdate.status).toBe(200);
+    expect(resUpdate.body.nome).toBe('Usuário Atualizado');
+  });
 });

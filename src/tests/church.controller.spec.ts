@@ -19,7 +19,7 @@ describe('Church Controller', () => {
     const res = await request(app)
       .post('/api/igrejas')
       .set('Authorization', `Bearer ${token}`)
-      .send({ nome: 'Igreja Teste', email: `igreja${Date.now()}@teste.com` });
+      .send({ nome: 'Igreja Teste', email: `igreja${Date.now()}@teste.com`, senhaAdmin: '123456', endereco: 'Rua Teste, 123' });
     expect(res.status).toBe(201);
     expect(res.body.igreja).toHaveProperty('id');
   });

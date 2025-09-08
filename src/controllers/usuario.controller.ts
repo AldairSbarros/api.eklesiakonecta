@@ -30,20 +30,24 @@ export const create = async (req: Request, res: Response) => {
     const { nome, email, senha, perfil, congregacaoId, token } = req.body;
 
     // Verificação de token para perfis especiais
-     if (perfil === 'SUPERUSER' && token !== process.env.TOKEN_SUPERUSER) {
-      return res.status(403).json({ error: 'Token de autorização inválido para admin.' });
+    if (perfil === 'SUPERUSER' && token !== process.env.TOKEN_SUPERUSER) {
+      return res.status(403).json({ error: 'Token de autorização inválido para superuser.' });
     }
-    if (perfil === 'ADMIN' && token !== process.env.TOKEN_ADMIN) {
-      return res.status(403).json({ error: 'Token de autorização inválido para admin.' });
+    // Para criar ADMIN, exige que o usuário autenticado seja ADMIN
+    if (perfil === 'ADMIN' && req.user?.perfil !== 'ADMIN') {
+      return res.status(403).json({ error: 'Apenas admin autenticado pode criar outro admin.' });
     }
-    if (perfil === 'Dirigente' && token !== process.env.TOKEN_PASTOR) {
-      return res.status(403).json({ error: 'Token de autorização inválido para dirigente.' });
+    // Para criar Dirigente, exige que o usuário autenticado seja Dirigente
+    if (perfil === 'Dirigente' && req.user?.perfil !== 'Dirigente') {
+      return res.status(403).json({ error: 'Apenas dirigente autenticado pode criar outro dirigente.' });
     }
-    if (perfil === 'Tesoureiro' && token !== process.env.TOKEN_TESOUREIRO) {
-      return res.status(403).json({ error: 'Token de autorização inválido para tesoureiro.' });
+    // Para criar Tesoureiro, exige que o usuário autenticado seja Tesoureiro
+    if (perfil === 'Tesoureiro' && req.user?.perfil !== 'Tesoureiro') {
+      return res.status(403).json({ error: 'Apenas tesoureiro autenticado pode criar outro tesoureiro.' });
     }
-     if (perfil === 'Secretario' && token !== process.env.TOKEN_SECRETARIO) {
-      return res.status(403).json({ error: 'Token de autorização inválido para secretario.' });
+    // Para criar Secretário, exige que o usuário autenticado seja Secretário
+    if (perfil === 'Secretario' && req.user?.perfil !== 'Secretario') {
+      return res.status(403).json({ error: 'Apenas secretário autenticado pode criar outro secretário.' });
     }
     // >>>>>>>>>>>> HASH DA SENHA <<<<<<<<<<<<
     const senhaHash = await bcrypt.hash(senha, 10);

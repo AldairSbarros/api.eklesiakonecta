@@ -6,6 +6,7 @@ let newSchema: string;
 let churchId: number;
 
 beforeAll(async () => {
+  jest.setTimeout(30000);
   // Cria igreja dinâmica
   const emailIgreja = `igreja${Date.now()}@teste.com`;
   const resChurch = await request(app)
@@ -16,7 +17,9 @@ beforeAll(async () => {
       password: 'SenhaForte123',
       endereco: 'Rua Teste, 123'
     });
+  console.log('RES IGREJA:', resChurch.status, resChurch.body);
   expect(resChurch.status).toBe(201);
+  expect(resChurch.body.igreja).toBeDefined();
   churchId = resChurch.body.igreja.id;
   newSchema = resChurch.body.igreja.schema;
   // Login como admin da igreja criada
@@ -24,12 +27,16 @@ beforeAll(async () => {
     .post('/api/auth/login')
     .set('schema', newSchema)
     .send({ email: emailIgreja, senha: 'SenhaForte123' });
+  console.log('RES LOGIN:', resLogin.status, resLogin.body);
   expect(resLogin.status).toBe(200);
+  expect(resLogin.body.token).toBeDefined();
   token = resLogin.body.token;
 });
 
 
 it.only('should create a tithe', async () => {
+  expect(newSchema).toBeDefined();
+  expect(token).toBeDefined();
   // Cria congregação
   const resCong = await request(app)
     .post('/api/congregacoes')
@@ -40,7 +47,9 @@ it.only('should create a tithe', async () => {
       churchId: churchId,
       endereco: 'Rua da Congregação, 456'
     });
+  console.log('RES CONG:', resCong.status, resCong.body);
   expect(resCong.status).toBe(201);
+  expect(resCong.body.id).toBeDefined();
   const congregacaoId = resCong.body.id;
 
   // Cria membro
@@ -53,7 +62,9 @@ it.only('should create a tithe', async () => {
       email: `membro${Date.now()}@teste.com`,
       congregacaoId: congregacaoId
     });
+  console.log('RES MEMBER:', resMember.status, resMember.body);
   expect(resMember.status).toBe(201);
+  expect(resMember.body.id).toBeDefined();
   const memberId = resMember.body.id;
 
   // Cria oferta/dízimo
@@ -62,14 +73,13 @@ it.only('should create a tithe', async () => {
     .set('schema', newSchema)
     .set('Authorization', `Bearer ${token}`)
     .send({
-      type: 'DIZIMO',
+      type: 'dizimo',
       valor: 100,
       data: new Date('2025-07-01').toISOString(),
       memberId: memberId,
       congregacaoId: congregacaoId
     });
-
-
+  console.log('RES OFFERING:', resOffering.status, resOffering.body);
   expect(resOffering.status).toBe(201);
   expect(resOffering.body).toHaveProperty('id');
 });

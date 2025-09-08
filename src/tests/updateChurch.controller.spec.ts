@@ -24,6 +24,7 @@ it('deve atualizar uma igreja', async () => {
     .send({
       nome: 'Igreja Update',
       email,
+      senhaAdmin: '123456',
       endereco: 'Rua Original'
     });
   const igrejaId = resCadastro.body.igreja.id; // <-- Corrigido!
