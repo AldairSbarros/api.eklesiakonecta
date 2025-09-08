@@ -1,3 +1,11 @@
+# Arquivos de ambiente e backups (NUNCA versionar)
+.env
+.env.*
+*.env
+*.env.*
+.env.bkp
+.env.local
+.env_localhost.bkp
 node_modules
 # Keep environment variables out of version control
 .env
