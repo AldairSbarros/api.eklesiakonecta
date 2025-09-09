@@ -87,37 +87,31 @@ Authorization: Bearer SEU_TOKEN_AQUI
 
 ## Usuários
 
-### Listar usuários (admin)
 
-`GET /usuarios`
+### Listar usuários (admin)
+`GET /api/usuarios`
 
 ### Criar usuário (admin)
-
-`POST /usuarios`
-
+`POST /api/usuarios`
 **Body:**
 ```json
 {
   "nome": "João",
   "email": "joao@teste.com",
   "senha": "123456",
-  "perfil": "tesoureiro",
+  "perfil": "TESOUREIRO",
   "congregacaoId": 2
 }
 ```
 
 ### Editar usuário (admin)
-
-`PUT /usuarios/:id`
+`PUT /api/usuarios/:id`
 
 ### Deletar usuário (admin)
-
-`DELETE /usuarios/:id`
+`DELETE /api/usuarios/:id`
 
 ### Redefinir senha (admin)
-
-`PATCH /usuarios/:id/reset-password`
-
+`PATCH /api/usuarios/:id/reset-password`
 **Body:**
 ```json
 {
@@ -126,9 +120,7 @@ Authorization: Bearer SEU_TOKEN_AQUI
 ```
 
 ### Trocar a própria senha (usuário autenticado)
-
-`PATCH /usuarios/change-password`
-
+`PATCH /api/usuarios/change-password`
 **Body:**
 ```json
 {
@@ -141,19 +133,18 @@ Authorization: Bearer SEU_TOKEN_AQUI
 
 ## Congregações
 
-### Listar congregações
 
-`GET /congregacoes`
+### Listar congregações
+`GET /api/congregacoes`
 
 ### Criar congregação
-
-`POST /congregacoes`
-
+`POST /api/congregacoes`
 **Body:**
 ```json
 {
   "nome": "Congregação Central",
-  "localizacao": "Rua Principal, 123"
+  "endereco": "Rua Principal, 123",
+  "churchId": 1
 }
 ```
 
@@ -161,19 +152,19 @@ Authorization: Bearer SEU_TOKEN_AQUI
 
 ## Membros
 
-### Listar membros
 
-`GET /membros?congregacaoId=1`
+### Listar membros
+`GET /api/membros?congregacaoId=1`
 
 ### Criar membro
-
-`POST /membros`
-
+`POST /api/membros`
 **Body:**
 ```json
 {
-  "name": "Maria",
-  "congregacaoId": 1
+  "nome": "Maria",
+  "email": "maria@teste.com",
+  "congregacaoId": 1,
+  "celulaId": 1
 }
 ```
 
@@ -181,14 +172,12 @@ Authorization: Bearer SEU_TOKEN_AQUI
 
 ## Células
 
-### Listar células
 
-`GET /celulas?congregacaoId=1`
+### Listar células
+`GET /api/celulas?congregacaoId=1`
 
 ### Criar célula
-
-`POST /celulas`
-
+`POST /api/celulas`
 **Body:**
 ```json
 {
@@ -218,22 +207,20 @@ Authorization: Bearer SEU_TOKEN_AQUI
 
 ## Ofertas
 
-### Listar ofertas
 
-`GET /ofertas?congregacaoId=1`
+### Listar ofertas
+`GET /api/offerings?congregacaoId=1`
 
 ### Criar oferta
-
-`POST /ofertas`
-
+`POST /api/offerings`
 **Body:**
 ```json
 {
   "memberId": 1,
   "congregacaoId": 1,
   "type": "dizimo", // ou "oferta"
-  "value": 100,
-  "date": "2025-06-17",
+  "valor": 100,
+  "data": "2025-06-17",
   "service": "domingo",
   "receiptPhoto": "/uploads/1/2025-6/arquivo.jpg" // opcional
 }
