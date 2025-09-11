@@ -50,7 +50,7 @@ export const cadastroInicial = async (
     // Executa o db push/migrate para criar as tabelas no novo schema
     try {
       // Corrigido para usar o path absoluto do schema
-      const dbUrl = `postgresql://aldai:2025@localhost:5433/eklesiakonecta?schema=${schemaName}`;
+  const dbUrl = `postgresql://aldai:2025@localhost:5433/eklesia_db?schema=${schemaName}`;
       const schemaPath = path.resolve(__dirname, "../../prisma/schema.prisma");
       const isWindows = process.platform === "win32";
       const cmd = isWindows
