@@ -51,62 +51,31 @@ const app = express();
 app.set('trust proxy', 1);
 
 // Middlewares globais
-app.use(rateLimit({ windowMs: 15 * 60 * 1000, max: 100 }));
-app.use(helmet());
+// Exemplo de middleware CORS customizado (ajuste conforme necessário)
+import { NextFunction } from 'express';
 
-// 🔐 CORS atualizado para ambientes local e de produção
-const allowedOrigins = [
-  'http://localhost:5173',
-  'https://api.eklesia.app.br:3001',
-  'https://eklesia.app.br',
-  'http://eklesia.app.br',
-  'https://www.eklesia.app.br',
-  'http://www.eklesia.app.br'
-];
-
-app.use(cors({
-  origin: function (origin, callback) {
-    if (!origin || allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error('Origem não permitida pelo CORS'));
-    }
-  },
-  credentials: true
-}));
-
-app.use((req, res, next) => {
+app.use(function (req: Request, res: Response, next: NextFunction): void {
+  const origin = req.headers.origin || '*';
+  res.header('Access-Control-Allow-Origin', origin);
   res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization, X-Church-Schema, schema');
+  res.header('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS');
+  res.header('Access-Control-Allow-Credentials', 'true');
+  if (req.method === 'OPTIONS') {
+    res.sendStatus(204);
+    return;
+  }
   next();
 });
 
-app.use(express.json());
-
-// Rota de health check
-app.get('/test', (req: Request, res: Response) => {
-  res.status(200).json({ ok: true });
-});
-
-// Documentação Swagger
-app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
-
-// Rotas abertas
-app.use('/api', cadastroInicialRoutes);
-app.use('/api/lives', liveRoutes);
-
+// CORS liberado para todas as origens (apenas para testes)
+app.use(cors({
+  origin: '*',
+  credentials: true
+}));
 // Rotas principais
 app.use('/api/igrejas', churchRoutes);
 app.use('/api/congregacoes', congregacaoRoutes);
 app.use('/api/membros', memberRoutes);
-app.use('/api/usuarios', usuarioRoutes);
-app.use('/api/pastores', pastorRoutes);
-
-// Células
-app.use('/api/celulas', celulaRoutes);
-app.use('/api/reunioes-celula', reuniaoCelulaRoutes);
-app.use('/api/presencas-celula', presencaCelulaRoutes);
-app.use('/api/visitantes-celula', visitanteCelulaRoutes);
-app.use('/api/mensagens-celula', mensagemCelulaRoutes);
 
 // Discipulado
 app.use('/api/discipulado', discipuladoRoutes);
