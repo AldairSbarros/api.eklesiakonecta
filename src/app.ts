@@ -76,6 +76,7 @@ app.use(function (req: Request, res: Response, next: NextFunction): void {
   next();
 });
 // Rotas principais
+app.use('/api/cadastro-inicial', cadastroInicialRoutes);
 app.use('/api/igrejas', churchRoutes);
 app.use('/api/congregacoes', congregacaoRoutes);
 app.use('/api/membros', memberRoutes);
