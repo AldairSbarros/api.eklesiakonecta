@@ -49,12 +49,13 @@ export const cadastroInicial = async (
 
     // Executa o db push/migrate para criar as tabelas no novo schema
     try {
-      // Corrigido para usar a porta 5433 igual ao .env
+      // Corrigido para usar o path absoluto do schema
       const dbUrl = `postgresql://aldai:2025@localhost:5433/eklesiakonecta?schema=${schemaName}`;
+      const schemaPath = path.resolve(__dirname, "../../prisma/schema.prisma");
       const isWindows = process.platform === "win32";
       const cmd = isWindows
-        ? `set DATABASE_URL=${dbUrl} && npx prisma db push --schema=prisma/schema.prisma`
-        : `DATABASE_URL=\"${dbUrl}\" npx prisma db push --schema=prisma/schema.prisma`;
+        ? `set DATABASE_URL=${dbUrl} && npx prisma db push --schema=${schemaPath}`
+        : `DATABASE_URL=\"${dbUrl}\" npx prisma db push --schema=${schemaPath}`;
       await new Promise((resolve, reject) => {
         exec(cmd, { shell: true }, (error: any, stdout: any, stderr: any) => {
           if (error) {
