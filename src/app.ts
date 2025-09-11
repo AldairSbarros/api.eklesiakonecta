@@ -51,9 +51,18 @@ const app = express();
 app.set('trust proxy', 1);
 
 // Middlewares globais
-// Exemplo de middleware CORS customizado (ajuste conforme necessário)
 import { NextFunction } from 'express';
 
+// CORS liberado para todas as origens (apenas para testes)
+app.use(cors({
+  origin: '*',
+  credentials: true
+}));
+
+// Middleware para aceitar JSON
+app.use(express.json());
+
+// Middleware CORS customizado para headers e métodos
 app.use(function (req: Request, res: Response, next: NextFunction): void {
   const origin = req.headers.origin || '*';
   res.header('Access-Control-Allow-Origin', origin);
@@ -66,12 +75,6 @@ app.use(function (req: Request, res: Response, next: NextFunction): void {
   }
   next();
 });
-
-// CORS liberado para todas as origens (apenas para testes)
-app.use(cors({
-  origin: '*',
-  credentials: true
-}));
 // Rotas principais
 app.use('/api/igrejas', churchRoutes);
 app.use('/api/congregacoes', congregacaoRoutes);
