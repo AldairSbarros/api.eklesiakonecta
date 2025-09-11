@@ -41,6 +41,7 @@ const authService = __importStar(require("../services/auth.service"));
 const bcryptjs_1 = __importDefault(require("bcryptjs"));
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const client_1 = require("@prisma/client");
+const headerUtils_1 = require("../utils/headerUtils");
 const prisma = new client_1.PrismaClient();
 const secret = process.env.JWT_SECRET || "seuSegredoSuperSecreto";
 // 1. Tenta autenticar como DevUser (superusuário global)
@@ -56,7 +57,7 @@ exports.tryDevUserAuth = tryDevUserAuth;
 // Cadastro
 const register = async (req, res) => {
     try {
-        const schema = req.headers['schema'];
+        const schema = (req.headers['x-church-schema'] || req.headers['schema']);
         if (!schema)
             return res.status(400).json({ error: 'Schema não informado no header.' });
         const { nome, email, senha, perfil, congregacaoId } = req.body;
@@ -88,15 +89,39 @@ exports.register = register;
 // Login
 const login = async (req, res) => {
     try {
-        const schema = req.headers['schema'];
-        if (!schema)
-            return res.status(400).json({ error: 'Schema não informado no header.' });
+        const schema = (0, headerUtils_1.extractSchema)(req);
         const { email, senha } = req.body;
         // 1. Tenta autenticar como DevUser (superusuário global)
         const devUserResult = await (0, exports.tryDevUserAuth)(email, senha, res);
         if (devUserResult)
             return; // Se autenticou como DevUser, já respondeu
-        // 2. Fluxo normal para usuários comuns
+        // 2. Se não há schema, tenta autenticar como admin de igreja (primeiro login)
+        if (!schema) {
+            try {
+                const igreja = await prisma.church.findFirst({ where: { email } });
+                if (igreja) {
+                    const valid = await bcryptjs_1.default.compare(senha, igreja.password);
+                    if (valid) {
+                        const token = jsonwebtoken_1.default.sign({ id: igreja.id, perfil: 'ADMIN', email: igreja.email, schema: igreja.schema }, secret, { expiresIn: '7d' });
+                        return res.json({
+                            token,
+                            usuario: {
+                                id: igreja.id,
+                                nome: igreja.nome,
+                                email: igreja.email,
+                                perfil: 'ADMIN',
+                                schema: igreja.schema
+                            }
+                        });
+                    }
+                }
+            }
+            catch (error) {
+                console.error('Erro ao tentar login como igreja:', error);
+            }
+            return res.status(400).json({ error: 'Schema não informado no header.' });
+        }
+        // 3. Fluxo normal para usuários comuns
         const usuario = await authService.findUsuarioByEmail(schema, email);
         if (!usuario) {
             res.status(401).json({ error: 'Usuário ou senha inválidos.' });

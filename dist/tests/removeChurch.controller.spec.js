@@ -24,6 +24,7 @@ it('deve remover uma igreja', async () => {
         .send({
         nome: 'Igreja Remove',
         email,
+        senhaAdmin: '123456',
         endereco: 'Rua Remover'
     });
     const igrejaId = resCadastro.body.igreja.id; // <-- Corrigido!

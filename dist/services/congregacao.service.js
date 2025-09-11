@@ -5,7 +5,16 @@ const prismaDynamic_1 = require("../utils/prismaDynamic");
 // Todas as funções agora recebem o schema como parâmetro
 const createCongregacao = async (schema, data) => {
     const prisma = (0, prismaDynamic_1.getPrisma)(schema);
-    return prisma.congregacao.create({ data });
+    const { nome, churchId, endereco } = data;
+    if (!churchId)
+        throw new Error('churchId é obrigatório');
+    return prisma.congregacao.create({
+        data: {
+            nome,
+            churchId,
+            endereco
+        }
+    });
 };
 exports.createCongregacao = createCongregacao;
 const listCongregacoes = async (schema) => {

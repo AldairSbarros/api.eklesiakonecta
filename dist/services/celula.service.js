@@ -4,7 +4,16 @@ exports.removeMembroCelula = exports.addMembroCelula = exports.listarMembrosCelu
 const prismaDynamic_1 = require("../utils/prismaDynamic");
 const createCelula = async (schema, data) => {
     const prisma = (0, prismaDynamic_1.getPrisma)(schema);
-    return prisma.celula.create({ data });
+    // Garante que só os campos corretos são enviados
+    const { nome, congregacaoId } = data;
+    if (!congregacaoId)
+        throw new Error('congregacaoId é obrigatório');
+    return prisma.celula.create({
+        data: {
+            nome,
+            congregacaoId
+        }
+    });
 };
 exports.createCelula = createCelula;
 const listCelulas = async (schema) => {

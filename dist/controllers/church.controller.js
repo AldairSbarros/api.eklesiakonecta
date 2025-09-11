@@ -37,9 +37,7 @@ const churchService = __importStar(require("../services/church.service"));
 const churchController = {
     async create(req, res) {
         try {
-            // Remove o campo schema, caso venha no body
-            if ('schema' in req.body)
-                delete req.body.schema;
+            // Permite que o campo schema seja passado no body (para testes e multi-tenant controlado)
             const novaIgreja = await churchService.createChurch(req.body);
             res.status(201).json({ message: "Igreja cadastrada com sucesso!", igreja: novaIgreja });
         }

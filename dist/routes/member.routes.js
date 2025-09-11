@@ -37,6 +37,7 @@ const express_1 = require("express");
 const memberController = __importStar(require("../controllers/member.controller"));
 const autenticarJWT_1 = require("../middleware/autenticarJWT");
 const autorizarRoles_1 = require("../middleware/autorizarRoles");
+const asyncHandler_1 = require("../middleware/asyncHandler");
 const router = (0, express_1.Router)();
 /**
  * @swagger
@@ -53,7 +54,7 @@ const router = (0, express_1.Router)();
  *       201:
  *         description: Membro criado com sucesso
  */
-router.post('/', memberController.create);
+router.post('/', (0, asyncHandler_1.asyncHandler)(memberController.create));
 /**
  * @swagger
  * /members:
@@ -63,7 +64,7 @@ router.post('/', memberController.create);
  *       200:
  *         description: Lista de membros retornada com sucesso
  */
-router.get('/', memberController.list);
+router.get('/', (0, asyncHandler_1.asyncHandler)(memberController.list));
 /**
  * @swagger
  * /members/{id}:
@@ -103,7 +104,7 @@ router.get('/:id', (req, res, next) => {
  *       200:
  *         description: Membro atualizado com sucesso
  */
-router.put('/:id', memberController.update);
+router.put('/:id', (0, asyncHandler_1.asyncHandler)(memberController.update));
 /**
  * @swagger
  * /members/{id}:
@@ -119,7 +120,7 @@ router.put('/:id', memberController.update);
  *       204:
  *         description: Membro removido com sucesso
  */
-router.delete('/:id', memberController.remove);
+router.delete('/:id', (0, asyncHandler_1.asyncHandler)(memberController.remove));
 /**
  * @swagger
  * /members/{id}/localizacao:

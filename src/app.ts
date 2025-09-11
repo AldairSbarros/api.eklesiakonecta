@@ -48,6 +48,7 @@ import './services/aniversariantes.service';
 import swaggerSpec from './docs/swaggerConfig';
 
 const app = express();
+app.set('trust proxy', 1);
 
 // Middlewares globais
 app.use(rateLimit({ windowMs: 15 * 60 * 1000, max: 100 }));

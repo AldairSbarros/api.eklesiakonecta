@@ -35,6 +35,7 @@ var __importStar = (this && this.__importStar) || (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = require("express");
 const encontroController = __importStar(require("../controllers/encontro.controller"));
+const asyncHandler_1 = require("../middleware/asyncHandler");
 const router = (0, express_1.Router)();
 /**
  * @swagger
@@ -51,9 +52,7 @@ const router = (0, express_1.Router)();
  *       201:
  *         description: Encontro criado com sucesso
  */
-router.post('/', (req, res, next) => {
-    encontroController.create(req, res).catch(next);
-});
+router.post('/', (0, asyncHandler_1.asyncHandler)(encontroController.create));
 /**
  * @swagger
  * /encontros:
@@ -63,9 +62,7 @@ router.post('/', (req, res, next) => {
  *       200:
  *         description: Lista de encontros retornada com sucesso
  */
-router.get('/', (req, res, next) => {
-    encontroController.list(req, res).catch(next);
-});
+router.get('/', (0, asyncHandler_1.asyncHandler)(encontroController.list));
 /**
  * @swagger
  * /encontros/{id}:
@@ -81,9 +78,7 @@ router.get('/', (req, res, next) => {
  *       200:
  *         description: Encontro encontrado com sucesso
  */
-router.get('/:id', (req, res, next) => {
-    encontroController.get(req, res).catch(next);
-});
+router.get('/:id', (0, asyncHandler_1.asyncHandler)(encontroController.get));
 /**
  * @swagger
  * /encontros/{id}:
@@ -105,9 +100,7 @@ router.get('/:id', (req, res, next) => {
  *       200:
  *         description: Encontro atualizado com sucesso
  */
-router.put('/:id', (req, res, next) => {
-    encontroController.update(req, res).catch(next);
-});
+router.put('/:id', (0, asyncHandler_1.asyncHandler)(encontroController.update));
 /**
  * @swagger
  * /encontros/{id}:
@@ -123,8 +116,6 @@ router.put('/:id', (req, res, next) => {
  *       204:
  *         description: Encontro removido com sucesso
  */
-router.delete('/:id', (req, res, next) => {
-    encontroController.remove(req, res).catch(next);
-});
+router.delete('/:id', (0, asyncHandler_1.asyncHandler)(encontroController.remove));
 exports.default = router;
 //# sourceMappingURL=encontro.routes.js.map

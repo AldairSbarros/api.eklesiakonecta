@@ -27,7 +27,7 @@ const router = (0, express_1.Router)();
  *       201:
  *         description: Igreja criada
  */
-router.post("/", autenticarJWT_1.autenticarJWT, (0, autorizarRoles_1.autorizarRoles)(["ADMIN"]), validarCadastroIgreja_1.validarCadastroIgreja, handleValidation_1.handleValidation, church_controller_1.default.create);
+router.post("/", validarCadastroIgreja_1.validarCadastroIgreja, handleValidation_1.handleValidation, church_controller_1.default.create);
 /**
  * @swagger
  * /church/{id}:

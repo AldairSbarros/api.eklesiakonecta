@@ -36,12 +36,15 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.removeMembro = exports.addMembro = exports.remove = exports.update = exports.get = exports.list = exports.atualizarLocalizacao = exports.create = void 0;
 exports.listarMembros = listarMembros;
 const celulaService = __importStar(require("../services/celula.service"));
+const headerUtils_1 = require("../utils/headerUtils");
 // Criar célula
 const create = async (req, res) => {
     try {
-        const schema = req.headers['schema'];
-        if (!schema)
-            return res.status(400).json({ error: 'Schema não informado no header.' });
+        const schema = (0, headerUtils_1.extractSchema)(req);
+        const validationError = (0, headerUtils_1.validateSchema)(schema);
+        if (validationError.error) {
+            return res.status(400).json(validationError);
+        }
         const celula = await celulaService.createCelula(schema, req.body);
         res.status(201).json(celula);
     }
@@ -52,7 +55,7 @@ const create = async (req, res) => {
 exports.create = create;
 const atualizarLocalizacao = async (req, res) => {
     try {
-        const schema = req.headers['schema'];
+        const schema = (req.headers['x-church-schema'] || req.headers['schema']);
         if (!schema)
             return res.status(400).json({ error: 'Schema não informado no header.' });
         const { id } = req.params;
@@ -68,9 +71,11 @@ exports.atualizarLocalizacao = atualizarLocalizacao;
 // Listar células
 const list = async (req, res) => {
     try {
-        const schema = req.headers['schema'];
-        if (!schema)
-            return res.status(400).json({ error: 'Schema não informado no header.' });
+        const schema = (0, headerUtils_1.extractSchema)(req);
+        const validationError = (0, headerUtils_1.validateSchema)(schema);
+        if (validationError.error) {
+            return res.status(400).json(validationError);
+        }
         const celulas = await celulaService.listCelulas(schema);
         res.json(celulas);
     }
@@ -82,9 +87,11 @@ exports.list = list;
 // Obter célula por ID
 const get = async (req, res) => {
     try {
-        const schema = req.headers['schema'];
-        if (!schema)
-            return res.status(400).json({ error: 'Schema não informado no header.' });
+        const schema = (0, headerUtils_1.extractSchema)(req);
+        const validationError = (0, headerUtils_1.validateSchema)(schema);
+        if (validationError.error) {
+            return res.status(400).json(validationError);
+        }
         const { id } = req.params;
         const celula = await celulaService.getCelula(schema, Number(id));
         if (!celula)
@@ -99,9 +106,11 @@ exports.get = get;
 // Atualizar célula
 const update = async (req, res) => {
     try {
-        const schema = req.headers['schema'];
-        if (!schema)
-            return res.status(400).json({ error: 'Schema não informado no header.' });
+        const schema = (0, headerUtils_1.extractSchema)(req);
+        const validationError = (0, headerUtils_1.validateSchema)(schema);
+        if (validationError.error) {
+            return res.status(400).json(validationError);
+        }
         const { id } = req.params;
         const celula = await celulaService.updateCelula(schema, Number(id), req.body);
         res.json(celula);
@@ -114,9 +123,11 @@ exports.update = update;
 // Remover célula
 const remove = async (req, res) => {
     try {
-        const schema = req.headers['schema'];
-        if (!schema)
-            return res.status(400).json({ error: 'Schema não informado no header.' });
+        const schema = (0, headerUtils_1.extractSchema)(req);
+        const validationError = (0, headerUtils_1.validateSchema)(schema);
+        if (validationError.error) {
+            return res.status(400).json(validationError);
+        }
         const { id } = req.params;
         await celulaService.deleteCelula(schema, Number(id));
         res.json({ message: 'Célula removida com sucesso.' });
@@ -128,9 +139,11 @@ const remove = async (req, res) => {
 exports.remove = remove;
 const addMembro = async (req, res) => {
     try {
-        const schema = req.headers['schema'];
-        if (!schema)
-            return res.status(400).json({ error: 'Schema não informado no header.' });
+        const schema = (0, headerUtils_1.extractSchema)(req);
+        const validationError = (0, headerUtils_1.validateSchema)(schema);
+        if (validationError.error) {
+            return res.status(400).json(validationError);
+        }
         const { id } = req.params;
         const { membroId } = req.body;
         const membro = await celulaService.addMembroCelula(schema, Number(id), Number(membroId));
@@ -143,9 +156,11 @@ const addMembro = async (req, res) => {
 exports.addMembro = addMembro;
 const removeMembro = async (req, res) => {
     try {
-        const schema = req.headers['schema'];
-        if (!schema)
-            return res.status(400).json({ error: 'Schema não informado no header.' });
+        const schema = (0, headerUtils_1.extractSchema)(req);
+        const validationError = (0, headerUtils_1.validateSchema)(schema);
+        if (validationError.error) {
+            return res.status(400).json(validationError);
+        }
         const { membroId } = req.params;
         await celulaService.removeMembroCelula(schema, Number(membroId));
         res.json({ message: 'Membro removido da célula.' });

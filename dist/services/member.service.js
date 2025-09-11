@@ -20,6 +20,7 @@ const createMember = async (schema, data) => {
         data: {
             nome: data.nome,
             congregacaoId,
+            celulaId: data.celulaId,
             telefone: data.telefone,
             email: data.email,
             senha: data.senha,

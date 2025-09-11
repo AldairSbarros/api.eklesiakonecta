@@ -42,13 +42,13 @@ const helmet_1 = __importDefault(require("helmet"));
 const express_rate_limit_1 = __importDefault(require("express-rate-limit"));
 const cors_1 = __importDefault(require("cors"));
 const swagger_ui_express_1 = __importDefault(require("swagger-ui-express"));
-// Importação dos módulos de rotas
 const church_routes_1 = __importDefault(require("./routes/church.routes"));
 const congregacao_routes_1 = __importDefault(require("./routes/congregacao.routes"));
 const member_routes_1 = __importDefault(require("./routes/member.routes"));
 const offering_routes_1 = __importDefault(require("./routes/offering.routes"));
 const usuario_routes_1 = __importDefault(require("./routes/usuario.routes"));
 const dashboard_routes_1 = __importDefault(require("./routes/dashboard.routes"));
+const relatorio_routes_1 = __importDefault(require("./routes/relatorio.routes"));
 const despesa_routes_1 = __importDefault(require("./routes/despesa.routes"));
 const auth_routes_1 = __importDefault(require("./routes/auth.routes"));
 const receita_routes_1 = __importDefault(require("./routes/receita.routes"));
@@ -75,7 +75,7 @@ const sermao_routes_1 = __importDefault(require("./routes/sermao.routes"));
 const password_routes_1 = __importDefault(require("./routes/password.routes"));
 const financeiro_routes_1 = __importDefault(require("./routes/financeiro.routes"));
 const devuser_routes_1 = __importDefault(require("./routes/devuser.routes"));
-// import relatoriosRoutes from './routes/relatorios.routes';
+// import relatoriosRoutes from './routes/relatorios.routes'; // Corrigido: era arquivo.routes
 const live_routes_1 = __importDefault(require("./routes/live.routes"));
 const cadastroInicial_routes_1 = __importDefault(require("./routes/cadastroInicial.routes"));
 const usuarioController = __importStar(require("./controllers/usuario.controller"));
@@ -84,6 +84,7 @@ const discipulado_routes_1 = __importDefault(require("./routes/discipulado.route
 require("./services/aniversariantes.service");
 const swaggerConfig_1 = __importDefault(require("./docs/swaggerConfig"));
 const app = (0, express_1.default)();
+app.set('trust proxy', 1);
 // Middlewares globais
 app.use((0, express_rate_limit_1.default)({ windowMs: 15 * 60 * 1000, max: 100 }));
 app.use((0, helmet_1.default)());
@@ -158,19 +159,19 @@ app.use('/api/sermoes', sermao_routes_1.default);
 app.use('/api/enderecos-membro', enderecoMembro_routes_1.default);
 app.use('/api/encontros', encontro_routes_1.default);
 app.use('/api/password', password_routes_1.default);
-// app.use('/api/relatorios', relatoriosRoutes);
-app.use('/api/auth', auth_routes_1.default);
-// Login alternativo
+app.use('/api/relatorio', relatorio_routes_1.default);
+app.use('/api/auth', auth_routes_1.default); // Inclui /api/auth/login, /api/auth/logout, etc
+// Rota alternativa de login de usuário
 app.post('/api/usuarios/login', (0, express_async_handler_1.default)(usuarioController.login));
-// Dev rotas
+// Rotas de super admin/dev
 app.use('/api', devuser_routes_1.default);
-// Arquivos estáticos
+// Rotas para arquivos estáticos
 app.use('/uploads', express_1.default.static('uploads'));
-// Rota base
+// Rota base de status
 app.get('/', (req, res) => {
     res.send('API Eklesia Konecta rodando');
 });
-// Cron de backup
+// Cron para backup agendado
 const cron = require('node-cron');
 const { exec } = require('child_process');
 const path = require('path');

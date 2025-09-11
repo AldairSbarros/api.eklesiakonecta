@@ -35,10 +35,15 @@ var __importStar = (this && this.__importStar) || (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.remove = exports.atualizarLocalizacao = exports.update = exports.get = exports.list = exports.create = void 0;
 const memberService = __importStar(require("../services/member.service"));
+const headerUtils_1 = require("../utils/headerUtils");
 // CREATE
 const create = async (req, res) => {
     try {
-        const schema = req.headers['schema'];
+        const schema = (0, headerUtils_1.extractSchema)(req);
+        const validationError = (0, headerUtils_1.validateSchema)(schema);
+        if (validationError.error) {
+            return res.status(400).json(validationError);
+        }
         const member = await memberService.createMember(schema, req.body);
         res.status(201).json(member);
     }
@@ -50,7 +55,7 @@ exports.create = create;
 // READ ALL
 const list = async (req, res) => {
     try {
-        const schema = req.headers['schema'];
+        const schema = (req.headers['x-church-schema'] || req.headers['schema']);
         const { congregacaoId } = req.query;
         const members = await memberService.listMembers(schema, congregacaoId ? Number(congregacaoId) : undefined);
         res.json(members);
@@ -63,7 +68,7 @@ exports.list = list;
 // READ ONE
 const get = async (req, res) => {
     try {
-        const schema = req.headers['schema'];
+        const schema = (req.headers['x-church-schema'] || req.headers['schema']);
         const { id } = req.params;
         const member = await memberService.getMember(schema, Number(id));
         if (!member)
@@ -78,7 +83,7 @@ exports.get = get;
 // UPDATE
 const update = async (req, res) => {
     try {
-        const schema = req.headers['schema'];
+        const schema = (req.headers['x-church-schema'] || req.headers['schema']);
         const { id } = req.params;
         const member = await memberService.updateMember(schema, Number(id), req.body);
         res.json(member);
@@ -91,7 +96,7 @@ exports.update = update;
 // Atualizar geolocalização do membro
 const atualizarLocalizacao = async (req, res) => {
     try {
-        const schema = req.headers['schema'];
+        const schema = (req.headers['x-church-schema'] || req.headers['schema']);
         if (!schema)
             return res.status(400).json({ error: 'Schema não informado no header.' });
         const { id } = req.params;
@@ -107,7 +112,7 @@ exports.atualizarLocalizacao = atualizarLocalizacao;
 // DELETE
 const remove = async (req, res) => {
     try {
-        const schema = req.headers['schema'];
+        const schema = (req.headers['x-church-schema'] || req.headers['schema']);
         const { id } = req.params;
         await memberService.deleteMember(schema, Number(id));
         res.json({ message: 'Membro removido com sucesso.' });

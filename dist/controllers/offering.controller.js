@@ -38,15 +38,17 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.listReceipts = exports.deleteReceiptPhoto = exports.updateReceiptPhoto = exports.remove = exports.update = exports.get = exports.list = exports.create = void 0;
 const offeringService = __importStar(require("../services/offering.service"));
+const headerUtils_1 = require("../utils/headerUtils");
 const fs_1 = __importDefault(require("fs"));
 const path_1 = __importDefault(require("path"));
 // CREATE
 const create = async (req, res) => {
     try {
         console.log('BODY RECEBIDO:', req.body);
-        const schema = req.headers['schema'];
-        if (!schema) {
-            res.status(400).json({ error: 'Schema não informado no header.' });
+        const schema = (0, headerUtils_1.extractSchema)(req);
+        const validationError = (0, headerUtils_1.validateSchema)(schema);
+        if (validationError.error) {
+            res.status(400).json(validationError);
             return;
         }
         // Aceita os campos do seu teste
@@ -77,7 +79,7 @@ exports.create = create;
 // READ ALL
 const list = async (req, res) => {
     try {
-        const schema = req.headers['schema'];
+        const schema = (req.headers['x-church-schema'] || req.headers['schema']);
         if (!schema) {
             res.status(400).json({ error: 'Schema não informado no header.' });
             return;
@@ -106,7 +108,7 @@ exports.list = list;
 // READ ONE
 const get = async (req, res) => {
     try {
-        const schema = req.headers['schema'];
+        const schema = (req.headers['x-church-schema'] || req.headers['schema']);
         if (!schema) {
             res.status(400).json({ error: 'Schema não informado no header.' });
             return;
@@ -127,7 +129,7 @@ exports.get = get;
 // UPDATE
 const update = async (req, res) => {
     try {
-        const schema = req.headers['schema'];
+        const schema = (req.headers['x-church-schema'] || req.headers['schema']);
         if (!schema) {
             res.status(400).json({ error: 'Schema não informado no header.' });
             return;
@@ -145,7 +147,7 @@ exports.update = update;
 // DELETE
 const remove = async (req, res) => {
     try {
-        const schema = req.headers['schema'];
+        const schema = (req.headers['x-church-schema'] || req.headers['schema']);
         if (!schema) {
             res.status(400).json({ error: 'Schema não informado no header.' });
             return;
@@ -162,7 +164,7 @@ exports.remove = remove;
 // UPDATE RECEIPT PHOTO
 const updateReceiptPhoto = async (req, res) => {
     try {
-        const schema = req.headers['schema'];
+        const schema = (req.headers['x-church-schema'] || req.headers['schema']);
         if (!schema) {
             res.status(400).json({ error: 'Schema não informado no header.' });
             return;
@@ -180,7 +182,7 @@ exports.updateReceiptPhoto = updateReceiptPhoto;
 // DELETE RECEIPT PHOTO
 const deleteReceiptPhoto = async (req, res) => {
     try {
-        const schema = req.headers['schema'];
+        const schema = (req.headers['x-church-schema'] || req.headers['schema']);
         if (!schema) {
             res.status(400).json({ error: 'Schema não informado no header.' });
             return;
@@ -206,7 +208,7 @@ exports.deleteReceiptPhoto = deleteReceiptPhoto;
 // LIST RECEIPTS
 const listReceipts = async (req, res) => {
     try {
-        const schema = req.headers['schema'];
+        const schema = (req.headers['x-church-schema'] || req.headers['schema']);
         if (!schema) {
             res.status(400).json({ error: 'Schema não informado no header.' });
             return;

@@ -7,12 +7,28 @@ const supertest_1 = __importDefault(require("supertest"));
 const app_1 = __importDefault(require("../app"));
 describe('Relatórios', () => {
     let token;
-    const schema = 'public'; // Ajuste conforme seu ambiente
+    let schema;
     beforeAll(async () => {
-        const res = await (0, supertest_1.default)(app_1.default)
+        // Cria uma igreja e obtém o schema e o admin
+        const churchRes = await (0, supertest_1.default)(app_1.default)
+            .post('/api/igrejas')
+            .send({
+            nome: 'Igreja Teste Relatorio',
+            email: `igreja_relatorio_${Date.now()}@teste.com`,
+            senhaAdmin: 'SenhaForte123!'
+        });
+        expect(churchRes.status).toBe(201);
+        schema = churchRes.body.igreja.schema;
+        console.log('churchRes.body', churchRes.body); // LOG PARA DEPURAÇÃO
+        // Faz login como admin recém-criado
+        const senhaAdmin = 'SenhaForte123!';
+        const loginRes = await (0, supertest_1.default)(app_1.default)
             .post('/api/auth/login')
-            .send({ email: 'aldairbarros@eklesia.app.br', senha: 'Alsib@2025' });
-        token = res.body.token;
+            .set('schema', schema)
+            .send({ email: churchRes.body.igreja.email, senha: senhaAdmin });
+        console.log('loginRes.body', loginRes.body); // LOG PARA DEPURAÇÃO
+        expect(loginRes.status).toBe(200);
+        token = loginRes.body.token;
     });
     async function getRelatorio(url, query) {
         return await (0, supertest_1.default)(app_1.default)
@@ -33,9 +49,10 @@ describe('Relatórios', () => {
             // Adicione outros parâmetros obrigatórios aqui
         };
         const res = await getRelatorio('/api/relatorios/celulas', query);
-        if (res.status !== 200) {
+        if (![200, 204, 404].includes(res.status)) {
             console.error('Erro relatório células:', res.body);
         }
+        expect([200, 204, 404]).toContain(res.status);
     });
     it('deve gerar relatório financeiro', async () => {
         const query = {
@@ -54,9 +71,10 @@ describe('Relatórios', () => {
             // Adicione outros parâmetros obrigatórios aqui
         };
         const res = await getRelatorio('/api/relatorios/financeiro', query);
-        if (res.status !== 200) {
+        if (![200, 204, 404].includes(res.status)) {
             console.error('Erro relatório financeiro:', res.body);
         }
+        expect([200, 204, 404]).toContain(res.status);
     });
     it('deve gerar relatório de discipulado', async () => {
         const query = {
@@ -65,7 +83,7 @@ describe('Relatórios', () => {
             // discipuladorId: '1', // Adicione se necessário
         };
         const res = await getRelatorio('/api/relatorios/discipulado/por-discipulador', query);
-        if (res.status !== 200) {
+        if (![200, 204, 404].includes(res.status)) {
             console.error('Erro relatório discipulado:', res.body);
         }
         expect([200, 204, 404]).toContain(res.status); // Aceita 404 caso não haja dados

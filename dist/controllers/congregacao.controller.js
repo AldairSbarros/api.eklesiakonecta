@@ -35,22 +35,28 @@ var __importStar = (this && this.__importStar) || (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.remove = exports.atualizarLocalizacao = exports.update = exports.list = exports.create = void 0;
 const congregacaoService = __importStar(require("../services/congregacao.service"));
+const headerUtils_1 = require("../utils/headerUtils");
 // Criar congregação
 const create = async (req, res) => {
     try {
-        const schema = req.headers['schema'];
+        const schema = (0, headerUtils_1.extractSchema)(req);
+        const validationError = (0, headerUtils_1.validateSchema)(schema);
+        if (validationError.error) {
+            return res.status(400).json(validationError);
+        }
         const congregacao = await congregacaoService.createCongregacao(schema, req.body);
         res.status(201).json(congregacao);
     }
     catch (error) {
-        res.status(500).json({ error: 'Erro ao criar congregação' });
+        console.error('ERRO CONGREGACAO:', error);
+        res.status(500).json({ error: 'Erro ao criar congregação', details: error?.message || error });
     }
 };
 exports.create = create;
 // Listar congregações
 const list = async (req, res) => {
     try {
-        const schema = req.headers['schema'];
+        const schema = (req.headers['x-church-schema'] || req.headers['schema']);
         const congregacoes = await congregacaoService.listCongregacoes(schema);
         res.status(200).json(congregacoes);
     }
@@ -62,7 +68,7 @@ exports.list = list;
 // Editar congregação
 const update = async (req, res) => {
     try {
-        const schema = req.headers['schema'];
+        const schema = (req.headers['x-church-schema'] || req.headers['schema']);
         const { id } = req.params;
         const congregacao = await congregacaoService.updateCongregacao(schema, Number(id), req.body);
         res.json(congregacao);
@@ -75,7 +81,7 @@ exports.update = update;
 // Atualizar geolocalização da congregação
 const atualizarLocalizacao = async (req, res) => {
     try {
-        const schema = req.headers['schema'];
+        const schema = (req.headers['x-church-schema'] || req.headers['schema']);
         if (!schema)
             return res.status(400).json({ error: 'Schema não informado no header.' });
         const { id } = req.params;
@@ -91,7 +97,7 @@ exports.atualizarLocalizacao = atualizarLocalizacao;
 // Deletar congregação
 const remove = async (req, res) => {
     try {
-        const schema = req.headers['schema'];
+        const schema = (req.headers['x-church-schema'] || req.headers['schema']);
         const { id } = req.params;
         await congregacaoService.deleteCongregacao(schema, Number(id));
         res.json({ message: 'Congregação removida com sucesso' });

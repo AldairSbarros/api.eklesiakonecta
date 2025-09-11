@@ -35,9 +35,11 @@ var __importStar = (this && this.__importStar) || (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = require("express");
 const congregacaoController = __importStar(require("../controllers/congregacao.controller"));
+const asyncHandler_1 = require("../middleware/asyncHandler");
 const autenticarJWT_1 = require("../middleware/autenticarJWT");
 const autorizarRoles_1 = require("../middleware/autorizarRoles");
 const router = (0, express_1.Router)();
+// Rotas protegidas e com asyncHandler
 /**
  * @swagger
  * /congregacoes:
@@ -53,7 +55,7 @@ const router = (0, express_1.Router)();
  *       201:
  *         description: Congregação criada
  */
-router.post('/', congregacaoController.create);
+router.post('/', (0, asyncHandler_1.asyncHandler)(congregacaoController.create));
 /**
  * @swagger
  * /congregacoes:
@@ -63,7 +65,7 @@ router.post('/', congregacaoController.create);
  *       200:
  *         description: Lista de congregações
  */
-router.get('/', congregacaoController.list);
+router.get('/', (0, asyncHandler_1.asyncHandler)(congregacaoController.list));
 /**
  * @swagger
  * /congregacoes/{id}:
@@ -85,7 +87,23 @@ router.get('/', congregacaoController.list);
  *       200:
  *         description: Congregação atualizada
  */
-router.put('/:id', congregacaoController.update);
+router.put('/:id', (0, asyncHandler_1.asyncHandler)(congregacaoController.update));
+/**
+ * @swagger
+ * /congregacoes/{id}:
+ *   delete:
+ *     summary: Remove uma congregação
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       204:
+ *         description: Congregação removida
+ */
+router.delete('/:id', (0, asyncHandler_1.asyncHandler)(congregacaoController.remove));
 /**
  * @swagger
  * /congregacoes/{id}:

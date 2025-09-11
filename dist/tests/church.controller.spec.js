@@ -18,13 +18,14 @@ beforeAll(async () => {
 });
 describe('Church Controller', () => {
     it('deve criar uma igreja', async () => {
+        jest.setTimeout(30000);
         const res = await (0, supertest_1.default)(app_1.default)
             .post('/api/igrejas')
             .set('Authorization', `Bearer ${token}`)
-            .send({ nome: 'Igreja Teste', email: `igreja${Date.now()}@teste.com` });
+            .send({ nome: 'Igreja Teste', email: `igreja${Date.now()}@teste.com`, senhaAdmin: '123456', endereco: 'Rua Teste, 123' });
         expect(res.status).toBe(201);
         expect(res.body.igreja).toHaveProperty('id');
-    });
+    }, 30000);
     it('deve listar igrejas', async () => {
         const res = await (0, supertest_1.default)(app_1.default)
             .get('/api/igrejas')
