@@ -207,6 +207,82 @@ docker compose up -d --scale api=2
 | PRISMA_CLIENT_IDLE_TTL_MS | TTL ms para descarte de clientes inativos |
 | NODE_ENV | production / development / test |
 
+## Proxy Reverso & SSL (Nginx)
+
+Arquivo de exemplo em `infra/nginx/api.eklesia.app.br.conf`.
+
+Passos (Ubuntu):
+```bash
+sudo apt update && sudo apt install -y nginx certbot python3-certbot-nginx
+sudo mkdir -p /var/www/certbot
+sudo cp infra/nginx/api.eklesia.app.br.conf /etc/nginx/sites-available/api.eklesia.app.br.conf
+sudo ln -s /etc/nginx/sites-available/api.eklesia.app.br.conf /etc/nginx/sites-enabled/
+sudo nginx -t && sudo systemctl reload nginx
+sudo certbot --nginx -d api.eklesia.app.br --redirect --agree-tos -m seu-email@dominio.com
+```
+Renovação automática já configurada pelo timer do Certbot (`systemctl list-timers | grep certbot`).
+
+Passos (Debian 12 / 11):
+```bash
+sudo apt update && sudo apt install -y nginx certbot python3-certbot-nginx
+# (Opcional) Abrir porta HTTP/HTTPS se usar UFW ou firewall
+# sudo ufw allow 'Nginx Full'
+sudo mkdir -p /var/www/certbot
+sudo cp infra/nginx/api.eklesia.app.br.conf /etc/nginx/sites-available/api.eklesia.app.br.conf
+sudo ln -s /etc/nginx/sites-available/api.eklesia.app.br.conf /etc/nginx/sites-enabled/ || true
+sudo nginx -t && sudo systemctl reload nginx
+sudo certbot --nginx -d api.eklesia.app.br --redirect --agree-tos -m seu-email@dominio.com
+```
+Notas Debian:
+- Caso `python3-certbot-nginx` não esteja disponível (Debian muito antigo), instalar via snap:
+   ```bash
+   sudo apt install -y snapd
+   sudo snap install core; sudo snap refresh core
+   sudo snap install --classic certbot
+   sudo ln -s /snap/bin/certbot /usr/bin/certbot
+   sudo certbot --nginx -d api.eklesia.app.br --redirect -m seu-email@dominio.com --agree-tos
+   ```
+- Verificar renovação: `sudo certbot renew --dry-run`.
+
+## CI/CD (GitHub Actions)
+
+Workflow em `.github/workflows/ci-cd.yml`:
+1. Testes (Postgres efêmero) + Prisma migrate deploy
+2. Build multi-stage Docker e push para GHCR (`ghcr.io/aldairsbarros/api.eklesiakonecta`)
+3. Deploy via SSH rodando `infra/deploy/deploy.sh`
+
+### Secrets necessários
+Configurar no repositório:
+- `DEPLOY_HOST` (IP ou hostname do VPS)
+- `DEPLOY_USER` (usuário com acesso SSH e docker)
+- `DEPLOY_KEY` (chave privada SSH)
+
+### Ajustes pós-clone no servidor
+```bash
+git clone https://github.com/AldairSbarros/api.eklesiakonecta.git
+cd api.eklesiakonecta
+cp .env.example .env # editar senhas
+docker login ghcr.io -u <github-username> -p <TOKEN_PAT_opcional>
+docker compose -f docker-compose.prod.yml up -d postgres redis
+```
+Primeiro deploy automatizado puxará a imagem e subirá o serviço API.
+
+### Deploy manual
+```bash
+bash infra/deploy/deploy.sh
+```
+
+## Observabilidade
+- `/metrics` (Prometheus). Proteja no Nginx se exposto publicamente.
+- Logs Nginx: `/var/log/nginx/eklesia_access.log` / `eklesia_error.log`.
+- Health multi-tenancy: `/api/health/multi-tenancy`.
+
+## Próximas melhorias sugeridas
+- Adicionar alerta de latência e saturação de cache Prisma (Prometheus rules)
+- Implementar escalonamento com systemd units + socket activation (opcional)
+- Adicionar Sentry ou OpenTelemetry
+
+
 ## Performance / Tuning
 - Evite excesso de criação de schemas: agrupe onboarding em lotes controlados.
 - Monitore logs `[Provisioner]` para tempos > 3s (possível gargalo no banco).
