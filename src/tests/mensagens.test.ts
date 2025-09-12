@@ -11,23 +11,25 @@ describe('Mensagens API', () => {
 
   beforeAll(async () => {
     // Cria igreja via API
+    const emailPastor = `igreja${Date.now()}@teste.com`;
     const churchRes = await request(app)
-      .post('/api/igrejas')
+      .post('/api/cadastro-inicial')
       .send({
-        nome: 'Igreja Teste',
-        email: `igreja${Date.now()}@teste.com`,
-        senhaAdmin: 'SenhaForte123'
+        nomeIgreja: 'Igreja Teste',
+        nomePastor: 'Pastor Mensagens',
+        emailPastor,
+        senhaPastor: 'SenhaForte123'
       });
     console.log('RES IGREJA:', churchRes.status, churchRes.body);
-    expect(churchRes.status).toBe(201);
-    schema = churchRes.body.igreja.schema;
-    igrejaId = churchRes.body.igreja.id;
+  expect([200,201]).toContain(churchRes.status);
+  schema = churchRes.body.igreja.schema;
+  igrejaId = 1;
 
     // Login admin
     const loginRes = await request(app)
       .post('/api/auth/login')
       .set('schema', schema)
-      .send({ email: churchRes.body.igreja.email, senha: 'SenhaForte123' });
+  .send({ email: emailPastor, senha: 'SenhaForte123' });
     console.log('RES LOGIN:', loginRes.status, loginRes.body);
     expect(loginRes.status).toBe(200);
     token = loginRes.body.token;

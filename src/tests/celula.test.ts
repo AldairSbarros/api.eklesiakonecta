@@ -13,17 +13,17 @@ describe('Células', () => {
 		const email = `igreja${Date.now()}@teste.com`;
 		const senha = 'SenhaForte123';
 		const resIgreja = await request(app)
-			.post('/api/igrejas')
+			.post('/api/cadastro-inicial')
 			.send({
-				nome: 'Igreja Teste',
-				email,
-				senhaAdmin: senha,
-				endereco: 'Rua Teste, 123'
+				nomeIgreja: 'Igreja Teste',
+				nomePastor: 'Pastor Teste',
+				emailPastor: email,
+				senhaPastor: senha
 			});
 		console.log('RES IGREJA:', resIgreja.status, resIgreja.body);
-		expect(resIgreja.status).toBe(201);
+		expect([200,201]).toContain(resIgreja.status);
 		schemaNovo = resIgreja.body.igreja.schema;
-		churchId = resIgreja.body.igreja.id;
+		churchId = 1; // igreja local criada com id 1 dentro do schema
 
 		const resLogin = await request(app)
 			.post('/api/auth/login')

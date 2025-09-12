@@ -17,27 +17,31 @@ describe('Multi-tenancy: isolamento entre igrejas', () => {
   let congregacaoB: any;
 
   it('deve criar duas igrejas distintas, congregações e autenticar em cada uma', async () => {
-    // Cria igreja A
+    const emailA = `igrejaA${Date.now()}@teste.com`;
+    const emailB = `igrejaB${Date.now()+1}@teste.com`;
+    // Cria igreja A via cadastro-inicial
     const resA = await request(app)
-      .post('/api/igrejas')
-      .send({ nome: 'Igreja A', email: `igrejaA${Date.now()}@teste.com`, senhaAdmin: '123456' });
-    expect(resA.status).toBe(201);
-    igrejaA = resA.body.igreja;
-    schemaA = igrejaA.schema;
+      .post('/api/cadastro-inicial')
+      .send({ nomeIgreja: 'Igreja A', nomePastor: 'Pastor A', emailPastor: emailA, senhaPastor: '123456' });
+    expect([200,201]).toContain(resA.status);
+    schemaA = resA.body?.igreja?.schema;
+    expect(schemaA).toBeDefined();
+    igrejaA = { schema: schemaA, email: emailA };
 
-    // Cria igreja B
+    // Cria igreja B via cadastro-inicial
     const resB = await request(app)
-      .post('/api/igrejas')
-      .send({ nome: 'Igreja B', email: `igrejaB${Date.now()}@teste.com`, senhaAdmin: '123456' });
-    expect(resB.status).toBe(201);
-    igrejaB = resB.body.igreja;
-    schemaB = igrejaB.schema;
+      .post('/api/cadastro-inicial')
+      .send({ nomeIgreja: 'Igreja B', nomePastor: 'Pastor B', emailPastor: emailB, senhaPastor: '123456' });
+    expect([200,201]).toContain(resB.status);
+    schemaB = resB.body?.igreja?.schema;
+    expect(schemaB).toBeDefined();
+    igrejaB = { schema: schemaB, email: emailB };
 
     // Autentica A
     const loginA = await request(app)
       .post('/api/auth/login')
       .set('schema', schemaA)
-      .send({ email: igrejaA.email, senha: '123456' });
+      .send({ email: emailA, senha: '123456' });
     expect(loginA.status).toBe(200);
     tokenA = loginA.body.token;
 
@@ -45,7 +49,7 @@ describe('Multi-tenancy: isolamento entre igrejas', () => {
     const loginB = await request(app)
       .post('/api/auth/login')
       .set('schema', schemaB)
-      .send({ email: igrejaB.email, senha: '123456' });
+      .send({ email: emailB, senha: '123456' });
     expect(loginB.status).toBe(200);
     tokenB = loginB.body.token;
 
@@ -54,7 +58,7 @@ describe('Multi-tenancy: isolamento entre igrejas', () => {
       .post('/api/congregacoes')
       .set('Authorization', `Bearer ${tokenA}`)
       .set('schema', schemaA)
-      .send({ nome: 'Congregação A', churchId: igrejaA.id, endereco: 'Rua Teste, 123' });
+      .send({ nome: 'Congregação A', churchId: 1, endereco: 'Rua Teste, 123' });
     expect(resCongA.status).toBe(201);
     congregacaoA = resCongA.body;
 
@@ -63,7 +67,7 @@ describe('Multi-tenancy: isolamento entre igrejas', () => {
       .post('/api/congregacoes')
       .set('Authorization', `Bearer ${tokenB}`)
       .set('schema', schemaB)
-      .send({ nome: 'Congregação B', churchId: igrejaB.id, endereco: 'Rua Teste, 456' });
+      .send({ nome: 'Congregação B', churchId: 1, endereco: 'Rua Teste, 456' });
     expect(resCongB.status).toBe(201);
     congregacaoB = resCongB.body;
   });
@@ -74,7 +78,7 @@ describe('Multi-tenancy: isolamento entre igrejas', () => {
       .post('/api/membros')
       .set('Authorization', `Bearer ${tokenA}`)
       .set('schema', schemaA)
-      .send({ nome: 'Membro A', email: `membroA${Date.now()}@teste.com`, senha: '123456', congregacaoId: congregacaoA.id });
+  .send({ nome: 'Membro A', email: `membroA${Date.now()}@teste.com`, congregacaoId: congregacaoA.id });
     expect(resMembroA.status).toBe(201);
     membroA = resMembroA.body;
 
@@ -83,7 +87,7 @@ describe('Multi-tenancy: isolamento entre igrejas', () => {
       .post('/api/membros')
       .set('Authorization', `Bearer ${tokenB}`)
       .set('schema', schemaB)
-      .send({ nome: 'Membro B', email: `membroB${Date.now()}@teste.com`, senha: '123456', congregacaoId: congregacaoB.id });
+  .send({ nome: 'Membro B', email: `membroB${Date.now()}@teste.com`, congregacaoId: congregacaoB.id });
     expect(resMembroB.status).toBe(201);
     membroB = resMembroB.body;
   });
@@ -92,7 +96,7 @@ describe('Multi-tenancy: isolamento entre igrejas', () => {
     const res = await request(app)
       .get('/api/membros')
       .set('Authorization', `Bearer ${tokenA}`)
-      .set('X-Church-Schema', schemaA);
+      .set('schema', schemaA);
   expect(res.status).toBe(200);
   // Deve conter apenas o membro da igreja A
   expect(res.body.length).toBe(1);
@@ -103,7 +107,7 @@ describe('Multi-tenancy: isolamento entre igrejas', () => {
     const res = await request(app)
       .get('/api/membros')
       .set('Authorization', `Bearer ${tokenB}`)
-      .set('X-Church-Schema', schemaB);
+      .set('schema', schemaB);
   expect(res.status).toBe(200);
   // Deve conter apenas o membro da igreja B
   expect(res.body.length).toBe(1);

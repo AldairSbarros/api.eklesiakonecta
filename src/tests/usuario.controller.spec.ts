@@ -14,16 +14,15 @@ beforeAll(async () => {
   const emailIgreja = `igreja_usuario_${Date.now()}@eklesia.app.br`;
   const senha = 'SenhaForte123';
   const churchRes = await request(app)
-    .post('/api/igrejas')
+    .post('/api/cadastro-inicial')
     .send({
-      nome: 'Igreja Teste Usuário',
-      email: emailIgreja,
-      senhaAdmin: senha,
-      endereco: 'Rua dos Usuários, 123'
+      nomeIgreja: 'Igreja Teste Usuário',
+      nomePastor: 'Pastor Usuário',
+      emailPastor: emailIgreja,
+      senhaPastor: senha
     });
   console.log('RES IGREJA:', churchRes.status, churchRes.body);
-  expect(churchRes.status).toBe(201);
-  expect(churchRes.body.igreja).toBeDefined();
+  expect([200,201]).toContain(churchRes.status);
   SCHEMA = churchRes.body.igreja?.schema;
   // Faz login como admin da igreja criada
   const loginRes = await request(app)

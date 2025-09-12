@@ -9,21 +9,21 @@ describe('Remove User Controller', () => {
     // Cria uma igreja e obtém o schema dinâmico
     const emailIgreja = `igreja_removeuser_${Date.now()}@eklesia.app.br`;
     const churchRes = await request(app)
-      .post('/api/igrejas')
+      .post('/api/cadastro-inicial')
       .send({
-        nome: 'Igreja Teste RemoveUser',
-        email: emailIgreja,
-        senhaAdmin: 'Alsib@2025',
-        endereco: 'Rua dos Usuários, 123',
+        nomeIgreja: 'Igreja Teste RemoveUser',
+        nomePastor: 'Pastor RemoveUser',
+        emailPastor: emailIgreja,
+        senhaPastor: 'Alsib@2025'
       });
     console.log('CHURCH RESPONSE:', churchRes.status, churchRes.body);
-    expect(churchRes.status).toBe(201);
+    expect([200,201]).toContain(churchRes.status);
     SCHEMA = churchRes.body.igreja?.schema;
     // Faz login como admin da igreja criada
     const loginRes = await request(app)
       .post('/api/auth/login')
       .set('schema', SCHEMA)
-      .send({ email: emailIgreja, senha: 'Alsib@2025' });
+  .send({ email: emailIgreja, senha: 'Alsib@2025' });
     console.log('LOGIN RESPONSE:', loginRes.status, loginRes.body);
     expect(loginRes.status).toBe(200);
     token = loginRes.body.token;

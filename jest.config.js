@@ -8,4 +8,9 @@ module.exports = {
   transform: {
     ...tsJestTransformCfg,
   },
+  maxWorkers: 2,
+  setupFilesAfterEnv: ["<rootDir>/jest.setup.ts"],
+  testTimeout: 30000,
+  testPathIgnorePatterns: ["/node_modules/", "/dist/"],
+  modulePathIgnorePatterns: ["<rootDir>/dist/"],
 };

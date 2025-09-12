@@ -75,6 +75,7 @@ model Congregacao {
   encontros         Encontro[]
   latitude  Float?  // <-- novo campo
   longitude Float?  // <-- novo campo
+  relatoriosFinanceiros RelatorioFinanceiroMensal[]
 }
 
 // Ministério (Homens, Mulheres, Jovens, Teens, Crianças, etc)
@@ -157,6 +158,8 @@ model Member {
   whatsapp           String?
   latitude  Float?  // <-- novo campo
   longitude Float?  // <-- novo campo
+  // Classificação eclesiástica para relatórios (Pastor Dirigente, Pastor, Diácono, Diaconisa, Membro)
+  categoriaEclesiastica CategoriaEclesiastica?
 
   // Discipulado (auto-relação)
   discipuladorId     Int?             // ID do discipulador deste membro
@@ -191,7 +194,6 @@ enum PerfilUsuario {
   Tesoureiro
   Secretario
   Pastor
-  superuser
   SUPERUSER
 }
 model Usuario {
@@ -493,4 +495,34 @@ model LiveStream {
   agendadaEm DateTime?
   criadaEm   DateTime @default(now())
   church     Church   @relation(fields: [churchId], references: [id])
+}
+
+// ==================== ENUMS DE APOIO A RELATÓRIOS ====================
+enum CategoriaEclesiastica {
+  PASTOR_DIRIGENTE
+  PASTOR
+  DIACONO
+  DIACONISA
+  MEMBRO
+}
+
+// ==================== RELATÓRIOS FINANCEIROS AGREGADOS ====================
+// Armazena snapshot mensal para evitar recomputo pesado em dashboards.
+model RelatorioFinanceiroMensal {
+  id                   Int       @id @default(autoincrement())
+  congregacaoId        Int
+  Congregacao          Congregacao @relation(fields: [congregacaoId], references: [id])
+  ano                  Int
+  mes                  Int        // 1-12
+  totalDizimistas      Int        // quantidade distinta de membros que dizimaram no mês
+  totalOfertas         Int        // quantidade de lançamentos de ofertas (não dízimos)
+  valorTotalDizimos    Float      // soma dos lançamentos type = 'DIZIMO' (ou similar)
+  valorTotalOfertas    Float      // soma dos lançamentos type = 'OFERTA' (ou similar)
+  valorTotalReceitas   Float      // soma de receitas gerais (Receita + dízimos + ofertas) conforme regra de negócio
+  valorComissao33      Float      // 33% que permanece na Congregação
+  valorRepasseCentral  Float      // valorTotalReceitas - valorComissao33
+  detalhesCategorias   Json?      // breakdown por CategoriaEclesiastica: { PASTOR: { dizimos: X, ofertas: Y, ... }, ... }
+  geradoEm             DateTime   @default(now())
+
+  @@unique([congregacaoId, ano, mes], name: "relatorio_financeiro_mensal_unico")
 }

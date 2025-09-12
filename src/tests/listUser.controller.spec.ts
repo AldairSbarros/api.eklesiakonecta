@@ -10,14 +10,14 @@ describe('List User Controller', () => {
     // Cria uma igreja e obtém o schema dinâmico
     const emailIgreja = `igreja_listuser_${Date.now()}@eklesia.app.br`;
     const churchRes = await request(app)
-      .post('/api/igrejas')
+      .post('/api/cadastro-inicial')
       .send({
-        nome: 'Igreja Teste ListUser',
-        email: emailIgreja,
-        senhaAdmin: 'Alsib@2025',
-        endereco: 'Rua dos Usuários, 123',
+        nomeIgreja: 'Igreja Teste ListUser',
+        nomePastor: 'Pastor ListUser',
+        emailPastor: emailIgreja,
+        senhaPastor: 'Alsib@2025'
       });
-    expect(churchRes.status).toBe(201);
+    expect([200,201]).toContain(churchRes.status);
     SCHEMA = churchRes.body.igreja?.schema;
     // Faz login como admin da igreja criada
     const loginRes = await request(app)

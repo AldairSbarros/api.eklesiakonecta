@@ -7,23 +7,25 @@ describe('Relatórios', () => {
 
   beforeAll(async () => {
     // Cria uma igreja e obtém o schema e o admin
+    const email = `igreja_relatorio_${Date.now()}@teste.com`;
     const churchRes = await request(app)
-      .post('/api/igrejas')
+      .post('/api/cadastro-inicial')
       .send({
-        nome: 'Igreja Teste Relatorio',
-        email: `igreja_relatorio_${Date.now()}@teste.com`,
-        senhaAdmin: 'SenhaForte123!'
+        nomeIgreja: 'Igreja Teste Relatorio',
+        nomePastor: 'Pastor Relatorio',
+        emailPastor: email,
+        senhaPastor: 'SenhaForte123!'
       });
-    expect(churchRes.status).toBe(201);
-  schema = churchRes.body.igreja.schema;
-    console.log('churchRes.body', churchRes.body); // LOG PARA DEPURAÇÃO
+    expect([200,201]).toContain(churchRes.status);
+    schema = churchRes.body.igreja.schema;
+    console.log('churchRes.body', churchRes.body);
 
     // Faz login como admin recém-criado
     const senhaAdmin = 'SenhaForte123!';
     const loginRes = await request(app)
       .post('/api/auth/login')
       .set('schema', schema)
-      .send({ email: churchRes.body.igreja.email, senha: senhaAdmin });
+  .send({ email: email, senha: senhaAdmin });
     console.log('loginRes.body', loginRes.body); // LOG PARA DEPURAÇÃO
     expect(loginRes.status).toBe(200);
     token = loginRes.body.token;

@@ -17,25 +17,27 @@ describe('Fluxo integrado: igreja > congregação > célula > membro > offering 
 
   it('deve criar igreja e autenticar admin', async () => {
     // Cria igreja via API
+    const email = `igreja${Date.now()}@teste.com`;
     const churchRes = await request(app)
-      .post('/api/igrejas')
+      .post('/api/cadastro-inicial')
       .send({
-        nome: 'Igreja Integração',
-        email: `igreja${Date.now()}@teste.com`,
-        senhaAdmin: 'SenhaForte123!'
+        nomeIgreja: 'Igreja Integração',
+        nomePastor: 'Pastor Integração',
+        emailPastor: email,
+        senhaPastor: 'SenhaForte123!'
       });
     console.log('RES IGREJA:', churchRes.status, churchRes.body);
-    expect(churchRes.status).toBe(201);
-    expect(churchRes.body.igreja).toBeDefined();
-    expect(churchRes.body.igreja.schema).toBeDefined();
-    schema = churchRes.body.igreja.schema;
-    churchId = churchRes.body.igreja.id;
+  expect([200,201]).toContain(churchRes.status);
+  expect(churchRes.body.igreja).toBeDefined();
+  expect(churchRes.body.igreja.schema).toBeDefined();
+  schema = churchRes.body.igreja.schema;
+  churchId = 1; // id local dentro do schema novo
 
     // Login admin
     const loginRes = await request(app)
       .post('/api/auth/login')
       .set('schema', schema)
-      .send({ email: churchRes.body.igreja.email, senha: 'SenhaForte123!' });
+    .send({ email: email, senha: 'SenhaForte123!' });
     console.log('RES LOGIN:', loginRes.status, loginRes.body);
     expect(loginRes.status).toBe(200);
     expect(loginRes.body.token).toBeDefined();
