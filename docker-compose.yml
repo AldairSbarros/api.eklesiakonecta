@@ -1,0 +1,39 @@
+version: '3.9'
+services:
+  postgres:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-senha}
+      POSTGRES_DB: eklesia
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks: [eklesia-net]
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    networks: [eklesia-net]
+
+  api:
+    build: .
+    image: eklesia-api:latest
+    depends_on:
+      - postgres
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      JWT_SECRET: ${JWT_SECRET}
+      REDIS_URL: ${REDIS_URL}
+      NODE_ENV: production
+      RUN_MIGRATIONS: ${RUN_MIGRATIONS:-true}
+      RUN_SEED: ${RUN_SEED:-false}
+    ports:
+      - "3001:3001"
+    networks: [eklesia-net]
+    restart: unless-stopped
+
+networks:
+  eklesia-net: {}
+
+volumes:
+  pgdata: {}

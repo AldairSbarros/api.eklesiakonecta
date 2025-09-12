@@ -153,22 +153,50 @@ Erros comuns:
 
 ## Deploy
 
-1. Faça o clone do projeto do GitHub no servidor.
-2. Configure o arquivo `.env` com as variáveis de produção.
-3. Instale as dependências:
+### Opção A: Docker / Produção (recomendado)
+
+Pré‑requisitos: Docker Engine e (opcional) Docker Compose.
+
+1. Copie `.env.example` para `.env` e ajuste valores.
+2. Suba stack completa (Postgres + Redis + API):
    ```bash
-   npm install
+   docker compose up -d --build
    ```
-4. Rode as migrations do banco:
+3. Logs da API:
    ```bash
-   npx prisma migrate deploy
+   docker compose logs -f api
    ```
-5. Inicie o servidor:
+4. Testar health:
    ```bash
-   npm start
+   curl http://localhost:3001/
+   curl http://localhost:3001/api/health/multi-tenancy
    ```
-6. Acesse a documentação da API em `/api-docs`.
-7. Verifique saúde multi-tenant em `/api/health/multi-tenancy`.
+5. Swagger: `http://localhost:3001/api-docs`
+
+Rebuild após alterações de código:
+```bash
+docker compose up -d --build api
+```
+
+Executar seed manual (ex: criar superuser global) — temporariamente:
+```bash
+docker compose run --rm -e RUN_SEED=true api
+```
+
+Escalar horizontalmente (containers adicionais, compartilhando DB/Redis):
+```bash
+docker compose up -d --scale api=2
+```
+
+### Opção B: Deploy manual (sem Docker)
+1. Clone o repositório.
+2. Instale dependências: `npm ci`.
+3. Gere client Prisma: `npx prisma generate`.
+4. Aplique migrations: `npx prisma migrate deploy`.
+5. (Opcional) Seed: `npm run seed`.
+6. Build: `npm run build`.
+7. Start: `npm run start:prod`.
+8. Reverse proxy (ex: Nginx) apontando para porta `3001`.
 
 ### Variáveis importantes em produção
 | Variável | Descrição |

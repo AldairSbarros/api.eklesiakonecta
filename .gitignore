@@ -2,8 +2,8 @@
 # Arquivos de ambiente e backups (NUNCA versionar)
 .env
 .env.*
-.env
-.env.*
+# Permitimos versionar o template
+!.env.example
 .env.bkp
 .env.local
 .env_localhost.bkp
