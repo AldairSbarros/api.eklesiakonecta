@@ -78,3 +78,25 @@ export const relatorioMensal = async (req: Request, res: Response, next: Functio
     next(err);
   }
 };
+
+// Snapshot mensal agregado (gera se não existir). Query: congregacaoId, mes, ano, opcional recomputar=true
+export const relatorioMensalSnapshot = async (req: Request, res: Response, next: Function) => {
+  try {
+    const schema = req.headers['schema'] as string;
+    const { congregacaoId, mes, ano, recomputar } = req.query;
+    if (!schema) return res.status(400).json({ error: 'Schema não informado' });
+    if (!congregacaoId || !mes || !ano) {
+      return res.status(400).json({ error: 'Informe congregacaoId, mes e ano' });
+    }
+    const snapshot = await financeiroService.getRelatorioFinanceiroMensalSnapshot(
+      schema,
+      Number(congregacaoId),
+      Number(mes),
+      Number(ano),
+      recomputar === 'true'
+    );
+    res.json(snapshot);
+  } catch (err) {
+    next(err);
+  }
+};

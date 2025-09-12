@@ -2,8 +2,18 @@ import { Request, Response } from "express";
 import * as churchService from "../services/church.service";
 
 const churchController = {
-  async create(req: Request, res: Response) {
+  async create(req: Request, res: Response): Promise<void> {
     try {
+      // Restrição de perfis: somente ADMIN ou SUPERUSER podem criar via rota autenticada.
+      // (Fluxo público de criação inicial deve usar outra rota como /api/cadastro-inicial se existir.)
+      const user: any = (req as any).user;
+      if (user) { // rota pode ser chamada sem auth em alguns testes antigos; só valida se veio token
+        const perfil = (user.perfil || '').toUpperCase();
+        if (![ 'ADMIN', 'SUPERUSER' ].includes(perfil) && user.superuser !== true) {
+          res.status(403).json({ error: 'Acesso negado: perfil sem permissão para criar igreja.' });
+          return;
+        }
+      }
       // Permite que o campo schema seja passado no body (para testes e multi-tenant controlado)
       const novaIgreja = await churchService.createChurch(req.body);
       res.status(201).json({ message: "Igreja cadastrada com sucesso!", igreja: novaIgreja });

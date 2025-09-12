@@ -1,4 +1,5 @@
-import { getPrisma } from "../utils/prismaDynamic";
+// LEGACY: Unused ministry service retained for reference.
+import { getPrisma } from "../../utils/prismaDynamic";
 
 export const createMinisterio = async (schema: string, data: any) => {
   const prisma = getPrisma(schema);

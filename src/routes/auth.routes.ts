@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { register, login } from '../controllers/auth.controller';
-import { verificarToken } from '../controllers/login.controller';
+// Rota /auth/verify removida: controlador login.controller inexistente.
 
 const router = Router();
 
@@ -54,22 +54,7 @@ router.post('/login', (req, res, next) => {
   Promise.resolve(login(req, res)).catch(next);
 });
 
-/**
- * @swagger
- * /auth/verify:
- *   get:
- *     summary: Verifica se o token JWT é válido
- *     security:
- *       - bearerAuth: []
- *     responses:
- *       200:
- *         description: Token válido
- *       401:
- *         description: Token inválido ou expirado
- */
- router.get('/verify', (req, res, next) => {
-  Promise.resolve(verificarToken(req, res)).catch(next);
-});
+// TODO: Caso necessário, reintroduzir endpoint /auth/verify usando middleware JWT existente.
 
 
 export default router;

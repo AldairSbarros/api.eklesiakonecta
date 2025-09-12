@@ -20,7 +20,9 @@ export const solicitarRecuperacao = async (req: Request, res: Response) => {
 
   // Aqui você enviaria o e-mail com o link: ex: https://seusite.com/reset-password?token=TOKEN
   // Simulação:
-  console.log(`Link de recuperação: https://seusite.com/reset-password?token=${token}`);
+  if (process.env.DEBUG_PASSWORD === 'true') {
+    console.log('[PASSWORD][RECUPERACAO] token gerado (debug):', token.substring(0, 8) + '...');
+  }
 
   res.json({ message: "E-mail de recuperação enviado (simulado)." });
 };

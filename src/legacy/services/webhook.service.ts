@@ -1,4 +1,5 @@
-import { getPrisma } from "../utils/prismaDynamic";
+// LEGACY: webhook service (no active controller reference)
+import { getPrisma } from "../../utils/prismaDynamic";
 
 export const createWebhook = async (schema: string, data: any) => {
   const prisma = getPrisma(schema);

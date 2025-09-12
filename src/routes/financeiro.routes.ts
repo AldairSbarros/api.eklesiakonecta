@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { PrismaClient } from '@prisma/client';
-import { relatorioMensal, resumoFinanceiro } from '../controllers/financeiro.controller';
+import { relatorioMensal, resumoFinanceiro, relatorioMensalSnapshot } from '../controllers/financeiro.controller';
 import { autenticarJWT } from '../middleware/autenticarJWT';
 import { autorizarRoles } from '../middleware/autorizarRoles';
 import ExcelJS from 'exceljs';
@@ -36,6 +36,35 @@ router.get('/resumo', autenticarJWT, autorizarRoles(['admin', 'tesoureiro']), (r
  */
 router.get('/relatorio-mensal', autenticarJWT, autorizarRoles(['admin', 'tesoureiro']), (req, res, next) => {
   relatorioMensal(req, res, next).catch(next);
+});
+
+/**
+ * @swagger
+ * /financeiro/relatorio-mensal/snapshot:
+ *   get:
+ *     summary: Retorna (ou gera) snapshot agregado do relatório financeiro mensal
+ *     parameters:
+ *       - in: query
+ *         name: congregacaoId
+ *         required: true
+ *         schema: { type: integer }
+ *       - in: query
+ *         name: mes
+ *         required: true
+ *         schema: { type: integer }
+ *       - in: query
+ *         name: ano
+ *         required: true
+ *         schema: { type: integer }
+ *       - in: query
+ *         name: recomputar
+ *         required: false
+ *         schema: { type: string, enum: ["true","false"] }
+ *     security:
+ *       - bearerAuth: []
+ */
+router.get('/relatorio-mensal/snapshot', autenticarJWT, autorizarRoles(['admin', 'tesoureiro']), (req, res, next) => {
+  relatorioMensalSnapshot(req, res, next).catch(next);
 });
 
 /**
