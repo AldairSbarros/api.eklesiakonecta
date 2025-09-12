@@ -1,15 +1,20 @@
 import { Request, Response } from 'express';
 import * as offeringService from '../services/offering.service';
+import { extractSchema, validateSchema } from '../utils/headerUtils';
 import fs from 'fs';
 import path from 'path';
 
 // CREATE
 export const create = async (req: Request, res: Response): Promise<void> => {
   try {
-    console.log('BODY RECEBIDO:', req.body)
-    const schema = req.headers['schema'] as string;
-    if (!schema) {
-      res.status(400).json({ error: 'Schema não informado no header.' });
+    // Log minimizado: não expor payload completo em produção
+    if (process.env.DEBUG_OFFERING === 'true') {
+      console.log('[OFFERING][CREATE] payload keys:', Object.keys(req.body || {}));
+    }
+    const schema = extractSchema(req);
+    const validationError = validateSchema(schema);
+    if (validationError.error) {
+      res.status(400).json(validationError);
       return;
     }
     // Aceita os campos do seu teste
@@ -22,7 +27,7 @@ export const create = async (req: Request, res: Response): Promise<void> => {
 }
 
     // Criação da oferta/dízimo
-    const offering = await offeringService.createOffering(schema, {
+    const offering = await offeringService.createOffering(schema!, {
   value: valor,
   date: new Date(data),
   memberId: memberId,
@@ -42,7 +47,7 @@ export const create = async (req: Request, res: Response): Promise<void> => {
 // READ ALL
 export const list = async (req: Request, res: Response): Promise<void> => {
   try {
-    const schema = req.headers['schema'] as string;
+  const schema = (req.headers['x-church-schema'] || req.headers['schema']) as string;
     if (!schema) {
       res.status(400).json({ error: 'Schema não informado no header.' });
       return;
@@ -69,7 +74,7 @@ export const list = async (req: Request, res: Response): Promise<void> => {
 // READ ONE
 export const get = async (req: Request, res: Response): Promise<void> => {
   try {
-    const schema = req.headers['schema'] as string;
+  const schema = (req.headers['x-church-schema'] || req.headers['schema']) as string;
     if (!schema) {
       res.status(400).json({ error: 'Schema não informado no header.' });
       return;
@@ -89,7 +94,7 @@ export const get = async (req: Request, res: Response): Promise<void> => {
 // UPDATE
 export const update = async (req: Request, res: Response): Promise<void> => {
   try {
-    const schema = req.headers['schema'] as string;
+  const schema = (req.headers['x-church-schema'] || req.headers['schema']) as string;
     if (!schema) {
       res.status(400).json({ error: 'Schema não informado no header.' });
       return;
@@ -106,7 +111,7 @@ export const update = async (req: Request, res: Response): Promise<void> => {
 // DELETE
 export const remove = async (req: Request, res: Response): Promise<void> => {
   try {
-    const schema = req.headers['schema'] as string;
+  const schema = (req.headers['x-church-schema'] || req.headers['schema']) as string;
     if (!schema) {
       res.status(400).json({ error: 'Schema não informado no header.' });
       return;
@@ -122,7 +127,7 @@ export const remove = async (req: Request, res: Response): Promise<void> => {
 // UPDATE RECEIPT PHOTO
 export const updateReceiptPhoto = async (req: Request, res: Response): Promise<void> => {
   try {
-    const schema = req.headers['schema'] as string;
+    const schema = (req.headers['x-church-schema'] || req.headers['schema']) as string;
     if (!schema) {
       res.status(400).json({ error: 'Schema não informado no header.' });
       return;
@@ -139,7 +144,7 @@ export const updateReceiptPhoto = async (req: Request, res: Response): Promise<v
 // DELETE RECEIPT PHOTO
 export const deleteReceiptPhoto = async (req: Request, res: Response): Promise<void> => {
   try {
-    const schema = req.headers['schema'] as string;
+    const schema = (req.headers['x-church-schema'] || req.headers['schema']) as string;
     if (!schema) {
       res.status(400).json({ error: 'Schema não informado no header.' });
       return;
@@ -166,7 +171,7 @@ export const deleteReceiptPhoto = async (req: Request, res: Response): Promise<v
 // LIST RECEIPTS
 export const listReceipts = async (req: Request, res: Response): Promise<void> => {
   try {
-    const schema = req.headers['schema'] as string;
+    const schema = (req.headers['x-church-schema'] || req.headers['schema']) as string;
     if (!schema) {
       res.status(400).json({ error: 'Schema não informado no header.' });
       return;

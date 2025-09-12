@@ -1,4 +1,6 @@
 import { getPrisma } from "../utils/prismaDynamic";
+import { Request, Response } from 'express';
+import { extractSchema, validateSchema } from '../utils/headerUtils';
 
 export async function registrarLog(
   schema: string,
@@ -29,29 +31,46 @@ export function relatorioMensalPDF(req: Request, res: Response) {
   return res.status(501).json({ error: 'Relatório mensal PDF não implementado.' });
 }
 
-import { Request, Response } from 'express';
-
 export async function relatorioCelulas(req: Request, res: Response) {
-  return res.status(200).json({ message: 'Relatório de células OK' });
+  try {
+    const schema = extractSchema(req);
+    const validationError = validateSchema(schema);
+    if (validationError.error) {
+      return res.status(400).json(validationError);
+    }
+    // Busca todas as células do schema, incluindo membros
+    const { listCelulas } = require('../services/celula.service');
+    const celulas = await listCelulas(schema!);
+    return res.status(200).json({ celulas });
+  } catch (error: any) {
+    return res.status(500).json({ error: error.message });
+  }
 }
 
 export async function relatorioFinanceiro(req: Request, res: Response) {
   try {
-    const schema = req.headers['schema'] as string;
-    console.log('[RELATORIO FINANCEIRO] HEADER schema:', schema);
-    if (!schema) {
-      console.error('[RELATORIO FINANCEIRO] ERRO: Schema não informado no header.');
-      return res.status(400).json({ error: 'Schema não informado no header.' });
+    const schema = extractSchema(req);
+    const validationError = validateSchema(schema);
+    if (process.env.DEBUG_RELATORIO === 'true') {
+      console.log('[RELATORIO FINANCEIRO] schema:', schema);
+    }
+    if (validationError.error) {
+      if (process.env.DEBUG_RELATORIO === 'true') {
+        console.error('[RELATORIO FINANCEIRO] ERRO: Header schema ausente');
+      }
+      return res.status(400).json(validationError);
     }
     const { getPrismaTenant } = require('../services/church.service');
-    const prisma = getPrismaTenant(schema);
+    const prisma = getPrismaTenant(schema!);
     // Busca todas as offerings do schema
     const offerings = await prisma.offering.findMany();
     const totalOfferings = offerings.reduce((acc: number, o: any) => acc + (o.value || 0), 0);
     await prisma.$disconnect();
     return res.status(200).json({ totalOfferings, offerings });
   } catch (error: any) {
-    console.error('[RELATORIO FINANCEIRO] ERRO:', error);
+    if (process.env.DEBUG_RELATORIO === 'true') {
+      console.error('[RELATORIO FINANCEIRO] ERRO:', error);
+    }
     return res.status(404).json({ error: 'Erro ao consultar relatório financeiro', details: error?.message || error });
   }
 }

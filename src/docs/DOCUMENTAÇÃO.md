@@ -14,6 +14,7 @@ Este documento detalha todos os endpoints, exemplos de uso e integrações do ba
 - [Despesas](#despesas)
 - [Relatórios](#relatórios)
 - [Dashboard](#dashboard)
+ - [Snapshot Financeiro Mensal](#snapshot-financeiro-mensal)
 - [Comprovantes (Fotos do Talão)](#comprovantes-fotos-do-talão)
 - [Perfis e Permissões](#perfis-e-permissões)
 - [Testes Automatizados](#testes-automatizados)
@@ -37,6 +38,37 @@ Este documento detalha todos os endpoints, exemplos de uso e integrações do ba
 
 ---
 
+## Autenticação & Onboarding
+
+### Fluxo de Onboarding Público (Nova Igreja)
+`POST /api/cadastro-inicial`
+```json
+{
+  "nomeIgreja": "Igreja Exemplo",
+  "nomePastor": "Fulano",
+  "emailPastor": "pastor@exemplo.com",
+  "senhaPastor": "SenhaForte123"
+}
+```
+Resposta:
+```json
+{
+  "success": true,
+  "message": "Cadastro inicial realizado com sucesso!",
+  "igreja": { "nome": "Igreja Exemplo", "schema": "igreja_exemplo_ab12cd34" },
+  "pastor": { "nome": "Fulano", "email": "pastor@exemplo.com" }
+}
+```
+
+Use o `schema` retornado para logar e operar no tenant.
+
+### Headers Multi‑Tenant Obrigatórios
+```
+schema: <schema_da_igreja>
+Authorization: Bearer <token>
+```
+Sem o header `schema` as rotas protegidas rejeitam a requisição. O login também exige o header.
+
 ## Autenticação
 
 ### Registrar usuário
@@ -56,7 +88,7 @@ Este documento detalha todos os endpoints, exemplos de uso e integrações do ba
 
 ### Login
 
-`POST /auth/login`
+`POST /auth/login` (enviar header `schema` do tenant)
 
 **Body:**
 ```json
@@ -87,37 +119,33 @@ Authorization: Bearer SEU_TOKEN_AQUI
 
 ## Usuários
 
-### Listar usuários (admin)
+> Importante: criação de igreja autenticada via `/api/igrejas` agora é apenas para ADMIN dentro do schema ou SUPERUSER no schema `public`. Para a maioria dos fluxos use sempre o onboarding público.
 
-`GET /usuarios`
+
+### Listar usuários (admin)
+`GET /api/usuarios`
 
 ### Criar usuário (admin)
-
-`POST /usuarios`
-
+`POST /api/usuarios`
 **Body:**
 ```json
 {
   "nome": "João",
   "email": "joao@teste.com",
   "senha": "123456",
-  "perfil": "tesoureiro",
+  "perfil": "TESOUREIRO",
   "congregacaoId": 2
 }
 ```
 
 ### Editar usuário (admin)
-
-`PUT /usuarios/:id`
+`PUT /api/usuarios/:id`
 
 ### Deletar usuário (admin)
-
-`DELETE /usuarios/:id`
+`DELETE /api/usuarios/:id`
 
 ### Redefinir senha (admin)
-
-`PATCH /usuarios/:id/reset-password`
-
+`PATCH /api/usuarios/:id/reset-password`
 **Body:**
 ```json
 {
@@ -126,9 +154,7 @@ Authorization: Bearer SEU_TOKEN_AQUI
 ```
 
 ### Trocar a própria senha (usuário autenticado)
-
-`PATCH /usuarios/change-password`
-
+`PATCH /api/usuarios/change-password`
 **Body:**
 ```json
 {
@@ -141,19 +167,18 @@ Authorization: Bearer SEU_TOKEN_AQUI
 
 ## Congregações
 
-### Listar congregações
 
-`GET /congregacoes`
+### Listar congregações
+`GET /api/congregacoes`
 
 ### Criar congregação
-
-`POST /congregacoes`
-
+`POST /api/congregacoes`
 **Body:**
 ```json
 {
   "nome": "Congregação Central",
-  "localizacao": "Rua Principal, 123"
+  "endereco": "Rua Principal, 123",
+  "churchId": 1
 }
 ```
 
@@ -161,19 +186,19 @@ Authorization: Bearer SEU_TOKEN_AQUI
 
 ## Membros
 
-### Listar membros
 
-`GET /membros?congregacaoId=1`
+### Listar membros
+`GET /api/membros?congregacaoId=1`
 
 ### Criar membro
-
-`POST /membros`
-
+`POST /api/membros`
 **Body:**
 ```json
 {
-  "name": "Maria",
-  "congregacaoId": 1
+  "nome": "Maria",
+  "email": "maria@teste.com",
+  "congregacaoId": 1,
+  "celulaId": 1
 }
 ```
 
@@ -181,14 +206,12 @@ Authorization: Bearer SEU_TOKEN_AQUI
 
 ## Células
 
-### Listar células
 
-`GET /celulas?congregacaoId=1`
+### Listar células
+`GET /api/celulas?congregacaoId=1`
 
 ### Criar célula
-
-`POST /celulas`
-
+`POST /api/celulas`
 **Body:**
 ```json
 {
@@ -218,22 +241,20 @@ Authorization: Bearer SEU_TOKEN_AQUI
 
 ## Ofertas
 
-### Listar ofertas
 
-`GET /ofertas?congregacaoId=1`
+### Listar ofertas
+`GET /api/offerings?congregacaoId=1`
 
 ### Criar oferta
-
-`POST /ofertas`
-
+`POST /api/offerings`
 **Body:**
 ```json
 {
   "memberId": 1,
   "congregacaoId": 1,
   "type": "dizimo", // ou "oferta"
-  "value": 100,
-  "date": "2025-06-17",
+  "valor": 100,
+  "data": "2025-06-17",
   "service": "domingo",
   "receiptPhoto": "/uploads/1/2025-6/arquivo.jpg" // opcional
 }
@@ -337,6 +358,71 @@ Authorization: Bearer SEU_TOKEN_AQUI
 
 `GET /relatorios/financeiro?dataInicio=2024-01-01&dataFim=2024-06-30`
 
+---
+
+## Snapshot Financeiro Mensal
+
+Endpoint otimizado que materializa (ou retorna) um snapshot agregado por Congregação / mês.
+
+`GET /financeiro/relatorio-mensal/snapshot?congregacaoId=1&mes=9&ano=2025`
+
+Headers obrigatórios:
+```
+Authorization: Bearer <TOKEN>
+schema: <schema_da_igreja>
+```
+
+Parâmetro opcional: `recomputar=true` força regenerar os dados.
+
+Resposta (exemplo):
+```json
+{
+  "id": 12,
+  "congregacaoId": 1,
+  "ano": 2025,
+  "mes": 9,
+  "totalDizimistas": 34,
+  "totalOfertas": 57,
+  "valorTotalDizimos": 18250.55,
+  "valorTotalOfertas": 7250.90,
+  "valorTotalReceitas": 26501.45,
+  "valorComissao33": 8745.48,
+  "valorRepasseCentral": 17755.97,
+  "detalhesCategorias": {
+    "PASTOR": { "dizimos": 5000, "ofertas": 900, "countDizimos": 5, "countOfertas": 7 },
+    "DIACONO": { "dizimos": 3200, "ofertas": 1100, "countDizimos": 8, "countOfertas": 10 },
+    "MEMBRO": { "dizimos": 10050.55, "ofertas": 5250, "countDizimos": 21, "countOfertas": 40 },
+    "SEM_CATEGORIA": { "dizimos": 0, "ofertas": 0, "countDizimos": 0, "countOfertas": 0 }
+  },
+  "geradoEm": "2025-09-05T12:30:00.000Z"
+}
+```
+
+Campos principais:
+- `totalDizimistas`: membros distintos com algum lançamento de dízimo no mês.
+- `totalOfertas`: quantidade de lançamentos de oferta.
+- `valorComissao33`: 33% retido na congregação.
+- `valorRepasseCentral`: restante destinado à tesouraria central.
+- `detalhesCategorias`: breakdown por categoria eclesiástica.
+
+### Exemplos (curl)
+
+Snapshot (usa cache se já existir):
+```bash
+curl -H "Authorization: Bearer $TOKEN" \
+  -H "schema: igreja_alpha" \
+  "https://api.seudominio.com/financeiro/relatorio-mensal/snapshot?congregacaoId=1&mes=9&ano=2025"
+```
+
+Forçando recomputar:
+```bash
+curl -H "Authorization: Bearer $TOKEN" \
+  -H "schema: igreja_alpha" \
+  "https://api.seudominio.com/financeiro/relatorio-mensal/snapshot?congregacaoId=1&mes=9&ano=2025&recomputar=true"
+```
+
+Para granularidade correta, definir `categoriaEclesiastica` em cada membro (enum: `PASTOR_DIRIGENTE`, `PASTOR`, `DIACONO`, `DIACONISA`, `MEMBRO`).
+
 ### Relatório de discipulado
 
 `GET /relatorios/discipulado/por-discipulador?dataInicio=2024-01-01&dataFim=2024-06-30`
@@ -364,14 +450,31 @@ Authorization: Bearer SEU_TOKEN_AQUI
 
 ## Perfis e Permissões
 
-- **admin**: acesso total a todas as rotas e dados.
-- **pastor**: acesso a todos os relatórios e congregações.
-- **tesoureiro/dirigente**: acesso apenas à própria congregação.
-- Todas as rotas protegidas exigem o header `Authorization: Bearer SEU_TOKEN`.
+Perfis (enum `PerfilUsuario`): `ADMIN`, `Dirigente`, `Tesoureiro`, `Secretario`, `Pastor`, `SUPERUSER`.
+
+- **ADMIN**: Controle amplo da igreja (schema).
+- **SUPERUSER**: Escopo global multi-igrejas (suporte / manutenção). Pode operar sem congregação vinculada.
+- **Tesoureiro**: Gerência financeira da(s) congregação(ões) atribuída(s).
+- **Pastor / Dirigente**: Gestão de membros, células, relatórios.
+- **Secretario**: Apoio administrativo (cadastros / atualizações).
+
+Header multi-tenant sempre obrigatório (inclusive login): `schema: <schema_da_igreja>`.
+
+### Classificação de Membros para Relatórios
+Campo opcional em `Member`: `categoriaEclesiastica` (enum `CategoriaEclesiastica`). Usado nos snapshots para separar dízimos/ofertas.
+
+### Módulos Legados
+Serviços antigos movidos para `src/legacy/services` (Escola de Líderes, Ministérios estendidos, Sermões, Vendas, Webhooks genéricos, etc.). Não expostos em rotas ativas – mantidos apenas por compatibilidade histórica até limpeza futura.
 
 ---
 
 ## Testes Automatizados
+
+Ambiente de testes:
+- Usa `NODE_ENV=test` para desabilitar cron diário de backup.
+- Fecha conexões e intervalos (Prisma cache) no `afterAll`.
+- Cada suíte cria seu schema via `/api/cadastro-inicial` e reutiliza.
+- Evitar usar `/api/igrejas` diretamente nos testes (rota agora restrita).
 
 - O backend possui testes unitários e de integração usando Jest e Supertest.
 - Para rodar os testes:
@@ -411,6 +514,9 @@ Authorization: Bearer SEU_TOKEN_AQUI
   2. Rode `npx prisma migrate dev` para criar o banco.
   3. Rode `npm install` e depois `npm run dev`.
 - Use ferramentas como **Insomnia** ou **Postman** para testar as rotas.
+- Para métricas de saúde e performance: `GET /health`, `GET /metrics` (Prometheus) e `GET /api/health/multi-tenancy`.
+- Cron de backup (02:00) desativado em ambiente de teste.
+- Rate limiting distribuído e lock de provisionamento evitam saturação em ambientes multi-tenant.
 
 ---
 

@@ -1,17 +1,9 @@
 {
   "configurado": true,
-<<<<<<< HEAD
-  "dataConfiguracao": "2025-09-08T14:37:22.730Z",
+  "dataConfiguracao": "2025-09-12T02:00:28.515Z",
   "primeiraIgreja": {
-    "nome": "Igreja Cadastro Inicial 1757342239779",
-    "schema": "igreja_cadastro_inic_1757342239786",
-    "email": "pastor1757342239779@teste.com"
-=======
-  "dataConfiguracao": "2025-07-19T22:58:29.991Z",
-  "primeiraIgreja": {
-    "nome": "Igreja Evangelica Assembleia de Deus no Amazonas - IEADAM",
-    "schema": "ieadam_1752965901147",
-    "email": "ieadam@eklesia.app.br"
->>>>>>> 141763c47bccc97b5b7c143a9407e64c2990b451
+    "nome": "Igreja Teste ListUser",
+    "schema": "igreja_teste_listuser_mfg6x3yy_8642",
+    "email": "igreja_listuser_1757642426445@eklesia.app.br"
   }
 }

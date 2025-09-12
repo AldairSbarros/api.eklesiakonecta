@@ -27,23 +27,42 @@ export const create = async (req: Request, res: Response) => {
     const schema = req.headers['schema'] as string;
     if (!schema) return res.status(400).json({ error: 'Schema não informado no header.' });
 
-    const { nome, email, senha, perfil, congregacaoId, token } = req.body;
+    let { nome, email, senha, perfil, congregacaoId, token } = req.body;
+    const mapa: Record<string, string> = {
+      'admin': 'ADMIN',
+      'ADMIN': 'ADMIN',
+      'dirigente': 'Dirigente',
+      'Dirigente': 'Dirigente',
+      'tesoureiro': 'Tesoureiro',
+      'Tesoureiro': 'Tesoureiro',
+      'secretario': 'Secretario',
+      'Secretario': 'Secretario',
+      'pastor': 'Pastor',
+      'Pastor': 'Pastor',
+      'superuser': 'SUPERUSER',
+      'SUPERUSER': 'SUPERUSER'
+    };
+    perfil = mapa[perfil] || perfil; // mantém se já veio correto
 
     // Verificação de token para perfis especiais
-     if (perfil === 'SUPERUSER' && token !== process.env.TOKEN_SUPERUSER) {
-      return res.status(403).json({ error: 'Token de autorização inválido para admin.' });
+  if (perfil === 'SUPERUSER' && token !== process.env.TOKEN_SUPERUSER) {
+      return res.status(403).json({ error: 'Token de autorização inválido para superuser.' });
     }
-    if (perfil === 'ADMIN' && token !== process.env.TOKEN_ADMIN) {
-      return res.status(403).json({ error: 'Token de autorização inválido para admin.' });
+  // Para criar ADMIN, exige que o usuário autenticado seja ADMIN
+  if (perfil === 'ADMIN' && req.user?.perfil !== 'ADMIN') {
+      return res.status(403).json({ error: 'Apenas admin autenticado pode criar outro admin.' });
     }
-    if (perfil === 'Dirigente' && token !== process.env.TOKEN_PASTOR) {
-      return res.status(403).json({ error: 'Token de autorização inválido para dirigente.' });
+    // Para criar Dirigente, exige que o usuário autenticado seja Dirigente
+  if (perfil === 'Dirigente' && req.user?.perfil !== 'Dirigente') {
+      return res.status(403).json({ error: 'Apenas dirigente autenticado pode criar outro dirigente.' });
     }
-    if (perfil === 'Tesoureiro' && token !== process.env.TOKEN_TESOUREIRO) {
-      return res.status(403).json({ error: 'Token de autorização inválido para tesoureiro.' });
+    // Para criar Tesoureiro, exige que o usuário autenticado seja Tesoureiro
+  if (perfil === 'Tesoureiro' && req.user?.perfil !== 'Tesoureiro') {
+      return res.status(403).json({ error: 'Apenas tesoureiro autenticado pode criar outro tesoureiro.' });
     }
-     if (perfil === 'Secretario' && token !== process.env.TOKEN_SECRETARIO) {
-      return res.status(403).json({ error: 'Token de autorização inválido para secretario.' });
+    // Para criar Secretário, exige que o usuário autenticado seja Secretário
+  if (perfil === 'Secretario' && req.user?.perfil !== 'Secretario') {
+      return res.status(403).json({ error: 'Apenas secretário autenticado pode criar outro secretário.' });
     }
     // >>>>>>>>>>>> HASH DA SENHA <<<<<<<<<<<<
     const senhaHash = await bcrypt.hash(senha, 10);
@@ -168,11 +187,11 @@ export const listDizimosCongregacao = async (req: Request, res: Response) => {
     const schema = req.headers['schema'] as string;
     if (!schema) return res.status(400).json({ error: 'Schema não informado no header.' });
 
-    const perfil = (req as any).user.perfil;
+  const perfil = (req as any).user.perfil;
     let congregacaoId: number | undefined = undefined;
 
     // Só admin pode ver todos, os outros só a própria congregação
-    if (perfil !== 'admin') {
+  if (perfil !== 'ADMIN') {
       congregacaoId = (req as any).user.congregacaoId;
       if (!congregacaoId) return res.status(400).json({ error: 'Congregação não encontrada para o usuário.' });
     }

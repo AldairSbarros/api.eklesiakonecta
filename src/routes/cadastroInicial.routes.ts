@@ -93,7 +93,7 @@ const router = Router();
  *                   type: string
  *                   example: "Erro ao realizar cadastro"
  */
-router.post('/cadastro-inicial', (req, res, next) => {
+router.post('/', (req, res, next) => {
   Promise.resolve(cadastroInicial(req, res)).catch(next);
 });
 
