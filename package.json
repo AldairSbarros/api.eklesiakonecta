@@ -3,6 +3,9 @@
   "scripts": {
     "build": "tsc",
     "start": "node dist/server.js",
+  "start:prod": "node dist/server.js",
+  "prisma:deploy": "prisma migrate deploy",
+  "prisma:generate": "prisma generate",
     "dev": "ts-node-dev src/server.ts",
     "test": "jest",
     "test:watch": "jest --watch",

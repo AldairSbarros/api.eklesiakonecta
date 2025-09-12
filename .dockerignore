@@ -1,0 +1,13 @@
+node_modules
+npm-debug.log
+Dockerfile*
+.dockerignore
+dist/*.map
+.git
+.gitignore
+README.md
+*.local
+uploads
+scripts/backupDatabase.js
+**/*.test.ts
+src/tests
