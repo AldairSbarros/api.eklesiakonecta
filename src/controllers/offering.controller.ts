@@ -7,7 +7,10 @@ import path from 'path';
 // CREATE
 export const create = async (req: Request, res: Response): Promise<void> => {
   try {
-    console.log('BODY RECEBIDO:', req.body)
+    // Log minimizado: não expor payload completo em produção
+    if (process.env.DEBUG_OFFERING === 'true') {
+      console.log('[OFFERING][CREATE] payload keys:', Object.keys(req.body || {}));
+    }
     const schema = extractSchema(req);
     const validationError = validateSchema(schema);
     if (validationError.error) {

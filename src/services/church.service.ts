@@ -1,32 +1,14 @@
 import { PrismaClient } from "@prisma/client";
-import { execSync } from "child_process";
+// execSync removido – passamos a usar provisioner (db push) controlado
 import bcrypt from "bcrypt";
 import { logAuditoria } from "../utils/logger";
+import { ensureSchema } from "../utils/schemaProvisioner";
+import { getPrisma } from "../utils/prismaDynamic";
 
 // Prisma global (schema público)
 const prismaGlobal = new PrismaClient();
 
-// Cria um novo schema no PostgreSQL
-async function criarSchema(nomeSchema: string) {
-  await prismaGlobal.$executeRawUnsafe(`CREATE SCHEMA IF NOT EXISTS "${nomeSchema}"`);
-}
-
-// Roda as migrations do Prisma no novo schema
-function rodarMigrationsNoSchema(schema: string) {
-  const dbUrl = process.env.DATABASE_URL!.replace(/schema=([a-zA-Z0-9_]+)/, `schema=${schema}`);
-  console.log(`[MIGRATION] Rodando migrations para schema: ${schema}`);
-  try {
-    const output = execSync(`npx prisma migrate deploy`, {
-      env: { ...process.env, DATABASE_URL: dbUrl },
-      stdio: 'pipe'
-    });
-    console.log(`[MIGRATION] Saída:
-${output.toString()}`);
-  } catch (err: any) {
-    console.error(`[MIGRATION] Erro ao rodar migrations para schema ${schema}:`, err.message, err.stdout?.toString(), err.stderr?.toString());
-    throw new Error(`Erro ao rodar migrations para schema ${schema}: ${err.message}`);
-  }
-}
+// (create schema + migrations agora tratados via ensureSchema)
 
 // Cria o usuário admin no novo schema
 async function criarAdminNoSchema({ nome, email, senha, schema }: { nome: string, email: string, senha: string, schema: string }) {
@@ -73,8 +55,7 @@ export const createChurch = async (data: any) => {
   const nomeSchema = data.schema && typeof data.schema === 'string' ? data.schema : `igreja_${Date.now()}`;
 
   try {
-    await criarSchema(nomeSchema);
-    rodarMigrationsNoSchema(nomeSchema);
+    await ensureSchema(nomeSchema); // cria e aplica estrutura se necessário
     await criarAdminNoSchema({
       nome: data.nome,
       email: data.email,
@@ -82,7 +63,7 @@ export const createChurch = async (data: any) => {
       schema: nomeSchema
     });
   } catch (error: any) {
-    throw new Error("Erro ao criar schema ou rodar migrations: " + error.message);
+    throw new Error("Erro ao preparar schema: " + error.message);
   }
 
   let novaIgreja;
@@ -104,22 +85,20 @@ export const createChurch = async (data: any) => {
     throw new Error("Erro ao cadastrar igreja: " + error.message);
   }
 
-  // Cria também no schema dinâmico para garantir integridade das FKs
+  // Cria também no schema dinâmico (estrutura já existe; apenas garante church local)
   try {
-    const prismaTenant = getPrismaTenant(nomeSchema);
+    const prismaTenant = getPrisma(nomeSchema);
     await prismaTenant.church.create({
       data: {
-        id: novaIgreja.id, // mesmo id do global
+        id: novaIgreja.id,
         nome: novaIgreja.nome,
         email: novaIgreja.email,
         password: novaIgreja.password,
         schema: novaIgreja.schema,
         status: novaIgreja.status,
         createdAt: novaIgreja.createdAt,
-        // outros campos opcionais podem ser copiados se necessário
       },
     });
-    await prismaTenant.$disconnect();
   } catch (error: any) {
     // Se falhar aqui, remove do global para não deixar lixo
     await prismaGlobal.church.delete({ where: { id: novaIgreja.id } });
@@ -132,16 +111,9 @@ export const createChurch = async (data: any) => {
 
 // Exemplo de função para obter PrismaClient do schema correto
 export function getPrismaTenant(schema: string) {
-  const { PrismaClient: PrismaTenant } = require("@prisma/client");
-  const dbUrl = process.env.DATABASE_URL!.replace(/schema=([a-zA-Z0-9_]+)/, `schema=${schema}`);
-  return new PrismaTenant({
-    datasources: {
-      db: { url: dbUrl }
-    }
-  });
+  return getPrisma(schema);
 }
 
-// As funções listChurches, getChurch, updateChurch, deleteChurch continuam usando prismaGlobal
 export const listChurches = async () => {
   try {
     return await prismaGlobal.church.findMany();

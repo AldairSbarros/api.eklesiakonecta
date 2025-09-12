@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import bcrypt from "bcrypt";
 import { getPrisma } from "../utils/prismaDynamic";
+import { provisionSchema } from "../utils/schemaProvisioner";
 import fs from "fs";
 import path from "path";
 const { exec } = require("child_process");
@@ -31,13 +32,9 @@ export const cadastroInicial = async (
       });
     }
 
-    // Criar schema único baseado no nome da igreja
-    const timestamp = Date.now();
-    const nomeIgrejaSafe = nomeIgreja
-      .toLowerCase()
-      .replace(/[^a-z0-9]/g, "_")
-      .substring(0, 20);
-    const schemaName = `${nomeIgrejaSafe}_${timestamp}`;
+  // Provisionar schema novo (gera nome seguro único)
+  const prov = await provisionSchema(nomeIgreja);
+  const schemaName = prov.schema;
 
     // 1. Salvar no schema público (controle global)
     const prismaPublic = getPrisma("public");
@@ -47,29 +44,7 @@ export const cadastroInicial = async (
       `CREATE SCHEMA IF NOT EXISTS "${schemaName}"`
     );
 
-    // Executa o db push/migrate para criar as tabelas no novo schema
-    try {
-      // Corrigido para usar o path absoluto do schema
-  const dbUrl = `postgresql://aldai:2025@localhost:5433/eklesia_db?schema=${schemaName}`;
-      const schemaPath = path.resolve(__dirname, "../../prisma/schema.prisma");
-      const isWindows = process.platform === "win32";
-      const cmd = isWindows
-        ? `set DATABASE_URL=${dbUrl} && npx prisma db push --schema=${schemaPath}`
-        : `DATABASE_URL=\"${dbUrl}\" npx prisma db push --schema=${schemaPath}`;
-      await new Promise((resolve, reject) => {
-        exec(cmd, { shell: true }, (error: any, stdout: any, stderr: any) => {
-          if (error) {
-            console.error("Erro ao criar tabelas do Prisma:", stderr || error);
-            reject(error);
-          } else {
-            console.log("Prisma db push output:", stdout);
-            resolve(stdout);
-          }
-        });
-      });
-    } catch (err) {
-      return res.status(500).json({ error: "Erro ao criar tabelas do sistema. Tente novamente." });
-    }
+  // db push já executado dentro do provisioner
 
     // Verifica se o email já existe no schema público
     const emailExiste = await prismaPublic.church.findFirst({
@@ -96,10 +71,10 @@ export const cadastroInicial = async (
       },
     });
 
-    await prismaPublic.$disconnect();
+  await prismaPublic.$disconnect();
 
-    // 2. Criar estrutura no schema específico da igreja
-    const prismaIgreja = getPrisma(schemaName);
+  // 2. Criar estrutura no schema específico da igreja
+  const prismaIgreja = getPrisma(schemaName);
 
     // Criar pastor principal no schema da igreja
     const pastor = await prismaIgreja.pastor.create({

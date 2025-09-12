@@ -8,7 +8,19 @@ export const validarCadastroUsuario = [
   body("senha")
     .isLength({ min: 6 }).withMessage("A senha deve ter pelo menos 6 caracteres."),
   body("perfil")
-    .isIn(["admin", "dirigente", "tesoureiro"])
-    .withMessage("Perfil deve ser admin, dirigente ou tesoureiro."),
+    .custom((value) => {
+      if (!value) return false;
+      const mapa: Record<string, string> = {
+        'admin': 'ADMIN',
+        'dirigente': 'Dirigente',
+        'tesoureiro': 'Tesoureiro',
+        'secretario': 'Secretario',
+        'pastor': 'Pastor',
+        'superuser': 'SUPERUSER'
+      };
+      const normalizado = mapa[String(value).toLowerCase()];
+      return !!normalizado;
+    })
+    .withMessage("Perfil inválido. Use admin, dirigente, tesoureiro, secretario, pastor ou superuser."),
   // ...outras validações se necessário
 ];

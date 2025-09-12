@@ -51,9 +51,13 @@ export async function relatorioFinanceiro(req: Request, res: Response) {
   try {
     const schema = extractSchema(req);
     const validationError = validateSchema(schema);
-    console.log('[RELATORIO FINANCEIRO] HEADER schema:', schema);
+    if (process.env.DEBUG_RELATORIO === 'true') {
+      console.log('[RELATORIO FINANCEIRO] schema:', schema);
+    }
     if (validationError.error) {
-      console.error('[RELATORIO FINANCEIRO] ERRO: Schema não informado no header.');
+      if (process.env.DEBUG_RELATORIO === 'true') {
+        console.error('[RELATORIO FINANCEIRO] ERRO: Header schema ausente');
+      }
       return res.status(400).json(validationError);
     }
     const { getPrismaTenant } = require('../services/church.service');
@@ -64,7 +68,9 @@ export async function relatorioFinanceiro(req: Request, res: Response) {
     await prisma.$disconnect();
     return res.status(200).json({ totalOfferings, offerings });
   } catch (error: any) {
-    console.error('[RELATORIO FINANCEIRO] ERRO:', error);
+    if (process.env.DEBUG_RELATORIO === 'true') {
+      console.error('[RELATORIO FINANCEIRO] ERRO:', error);
+    }
     return res.status(404).json({ error: 'Erro ao consultar relatório financeiro', details: error?.message || error });
   }
 }
