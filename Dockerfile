@@ -32,7 +32,8 @@ ENV NODE_ENV=production
 WORKDIR /app
 
 # Usuário não-root por segurança
-RUN useradd -m nodeusr
+RUN apt-get update && apt-get install -y --no-install-recommends openssl ca-certificates && rm -rf /var/lib/apt/lists/* \
+    && useradd -m nodeusr
 
 # Copia somente o necessário
 COPY package.json package-lock.json* ./
