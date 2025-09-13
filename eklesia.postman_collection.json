@@ -1,0 +1,253 @@
+{
+  "info": {
+    "name": "Eklesia API Single-Tenant",
+    "_postman_id": "00000000-0000-0000-0000-000000000001",
+    "description": "Coleção de rotas CRUD e relatórios para a API Eklesia Single-Tenant.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:3000" },
+    { "key": "igrejaId", "value": "1" },
+    { "key": "congregacaoId", "value": "1" },
+    { "key": "geracaoId", "value": "1" },
+    { "key": "celulaId", "value": "1" },
+    { "key": "membroId", "value": "1" },
+    { "key": "mes", "value": "2025-09" }
+  ],
+  "item": [
+    {
+      "name": "Health",
+      "item": [
+        {
+          "name": "GET /health",
+          "request": { "method": "GET", "url": "{{baseUrl}}/health" }
+        }
+      ]
+    },
+    {
+      "name": "Igrejas",
+      "item": [
+        {
+          "name": "POST /igrejas",
+          "request": {
+            "method": "POST",
+            "header": [ {"key": "Content-Type", "value": "application/json"} ],
+            "body": { "mode": "raw", "raw": "{\n  \"nome\": \"Igreja Central\"\n}" },
+            "url": "{{baseUrl}}/igrejas"
+          }
+        },
+        { "name": "GET /igrejas", "request": { "method": "GET", "url": "{{baseUrl}}/igrejas" } },
+        { "name": "GET /igrejas/:id", "request": { "method": "GET", "url": "{{baseUrl}}/igrejas/{{igrejaId}}" } },
+        {
+          "name": "PUT /igrejas/:id",
+          "request": {
+            "method": "PUT",
+            "header": [ {"key": "Content-Type", "value": "application/json"} ],
+            "body": { "mode": "raw", "raw": "{\n  \"nome\": \"Igreja Central Revisada\"\n}" },
+            "url": "{{baseUrl}}/igrejas/{{igrejaId}}"
+          }
+        },
+        { "name": "DELETE /igrejas/:id", "request": { "method": "DELETE", "url": "{{baseUrl}}/igrejas/{{igrejaId}}" } },
+        { "name": "GET /igrejas/:igrejaId/congregacoes", "request": { "method": "GET", "url": "{{baseUrl}}/igrejas/{{igrejaId}}/congregacoes" } },
+        {
+          "name": "POST /igrejas/:igrejaId/congregacoes",
+          "request": {
+            "method": "POST",
+            "header": [ {"key": "Content-Type", "value": "application/json"} ],
+            "body": { "mode": "raw", "raw": "{\n  \"nome\": \"Congregação Zona Norte\"\n}" },
+            "url": "{{baseUrl}}/igrejas/{{igrejaId}}/congregacoes"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Congregações",
+      "item": [
+        {
+          "name": "POST /congregacoes",
+            "request": {
+              "method": "POST",
+              "header": [{"key": "Content-Type", "value": "application/json"}],
+              "body": {"mode": "raw", "raw": "{\n  \"nome\": \"Congregação Centro\",\n  \"igrejaId\": {{igrejaId}}\n}"},
+              "url": "{{baseUrl}}/congregacoes"
+            }
+        },
+        { "name": "GET /congregacoes", "request": { "method": "GET", "url": "{{baseUrl}}/congregacoes" } },
+        { "name": "GET /congregacoes/:id", "request": { "method": "GET", "url": "{{baseUrl}}/congregacoes/{{congregacaoId}}" } },
+        {
+          "name": "PUT /congregacoes/:id",
+          "request": {
+            "method": "PUT",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {"mode": "raw", "raw": "{\n  \"nome\": \"Congregação Centro Revisada\"\n}"},
+            "url": "{{baseUrl}}/congregacoes/{{congregacaoId}}"
+          }
+        },
+        { "name": "DELETE /congregacoes/:id", "request": { "method": "DELETE", "url": "{{baseUrl}}/congregacoes/{{congregacaoId}}" } }
+      ]
+    },
+    {
+      "name": "Gerações",
+      "item": [
+        {
+          "name": "POST /congregacoes/:congregacaoId/geracoes",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {"mode": "raw", "raw": "{\n  \"nome\": \"Geração Jovens\"\n}"},
+            "url": "{{baseUrl}}/congregacoes/{{congregacaoId}}/geracoes"
+          }
+        },
+        { "name": "GET /geracoes", "request": { "method": "GET", "url": "{{baseUrl}}/geracoes" } },
+        { "name": "GET /geracoes/:id", "request": { "method": "GET", "url": "{{baseUrl}}/geracoes/{{geracaoId}}" } },
+        { "name": "GET /congregacoes/:congregacaoId/geracoes", "request": { "method": "GET", "url": "{{baseUrl}}/congregacoes/{{congregacaoId}}/geracoes" } },
+        {
+          "name": "PUT /geracoes/:id",
+          "request": {
+            "method": "PUT",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {"mode": "raw", "raw": "{\n  \"nome\": \"Geração Jovens Revisada\"\n}"},
+            "url": "{{baseUrl}}/geracoes/{{geracaoId}}"
+          }
+        },
+        { "name": "DELETE /geracoes/:id", "request": { "method": "DELETE", "url": "{{baseUrl}}/geracoes/{{geracaoId}}" } }
+      ]
+    },
+    {
+      "name": "Células",
+      "item": [
+        {
+          "name": "POST /celulas",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {"mode": "raw", "raw": "{\n  \"nome\": \"Célula Alpha\",\n  \"congregacaoId\": {{congregacaoId}},\n  \"geracaoId\": {{geracaoId}},\n  \"diaSemana\": \"QUI\",\n  \"horario\": \"19:30\",\n  \"localReuniao\": \"Casa 12\"\n}"},
+            "url": "{{baseUrl}}/celulas"
+          }
+        },
+        { "name": "GET /celulas", "request": { "method": "GET", "url": "{{baseUrl}}/celulas" } },
+        { "name": "GET /celulas/:id", "request": { "method": "GET", "url": "{{baseUrl}}/celulas/{{celulaId}}" } },
+        {
+          "name": "PUT /celulas/:id",
+          "request": {
+            "method": "PUT",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {"mode": "raw", "raw": "{\n  \"nome\": \"Célula Alpha Revisada\",\n  \"horario\": \"20:00\"\n}"},
+            "url": "{{baseUrl}}/celulas/{{celulaId}}"
+          }
+        },
+        { "name": "DELETE /celulas/:id", "request": { "method": "DELETE", "url": "{{baseUrl}}/celulas/{{celulaId}}" } },
+        { "name": "GET /congregacoes/:congregacaoId/celulas", "request": { "method": "GET", "url": "{{baseUrl}}/congregacoes/{{congregacaoId}}/celulas" } },
+        {
+          "name": "POST /congregacoes/:congregacaoId/celulas",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {"mode": "raw", "raw": "{\n  \"nome\": \"Célula Beta\",\n  \"geracaoId\": {{geracaoId}}\n}"},
+            "url": "{{baseUrl}}/congregacoes/{{congregacaoId}}/celulas"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Membros",
+      "item": [
+        {
+          "name": "POST /membros",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {"mode": "raw", "raw": "{\n  \"nome\": \"João Silva\",\n  \"celulaId\": {{celulaId}},\n  \"email\": \"joao@example.com\"\n}"},
+            "url": "{{baseUrl}}/membros"
+          }
+        },
+        { "name": "GET /membros", "request": { "method": "GET", "url": "{{baseUrl}}/membros" } },
+        { "name": "GET /membros/:id", "request": { "method": "GET", "url": "{{baseUrl}}/membros/{{membroId}}" } },
+        {
+          "name": "PUT /membros/:id",
+          "request": {
+            "method": "PUT",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {"mode": "raw", "raw": "{\n  \"nome\": \"João Silva Atualizado\",\n  \"telefone\": \"11999990000\"\n}"},
+            "url": "{{baseUrl}}/membros/{{membroId}}"
+          }
+        },
+        { "name": "DELETE /membros/:id", "request": { "method": "DELETE", "url": "{{baseUrl}}/membros/{{membroId}}" } },
+        { "name": "GET /celulas/:celulaId/membros", "request": { "method": "GET", "url": "{{baseUrl}}/celulas/{{celulaId}}/membros" } },
+        {
+          "name": "POST /celulas/:celulaId/membros",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {"mode": "raw", "raw": "{\n  \"nome\": \"Maria Secundária\"\n}"},
+            "url": "{{baseUrl}}/celulas/{{celulaId}}/membros"
+          }
+        },
+        { "name": "GET /membros/:membroId/etapas", "request": { "method": "GET", "url": "{{baseUrl}}/membros/{{membroId}}/etapas" } },
+        {
+          "name": "POST /membros/:membroId/etapas",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {"mode": "raw", "raw": "{\n  \"etapa\": \"MINICURSO\"\n}"},
+            "url": "{{baseUrl}}/membros/{{membroId}}/etapas"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Receitas",
+      "item": [
+        {
+          "name": "POST /congregacoes/:congregacaoId/receitas (Dízimo)",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {"mode": "raw", "raw": "{\n  \"tipo\": \"DIZIMO\",\n  \"valor\": \"150.00\",\n  \"formaPagamento\": \"ESPECIE\",\n  \"membroId\": {{membroId}}\n}"},
+            "url": "{{baseUrl}}/congregacoes/{{congregacaoId}}/receitas"
+          }
+        },
+        {
+          "name": "POST /congregacoes/:congregacaoId/receitas (Oferta)",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {"mode": "raw", "raw": "{\n  \"tipo\": \"OFERTA\",\n  \"valor\": \"80.00\",\n  \"formaPagamento\": \"PIX\",\n  \"cultoDescricao\": \"Culto Noite\"\n}"},
+            "url": "{{baseUrl}}/congregacoes/{{congregacaoId}}/receitas"
+          }
+        },
+        { "name": "GET /congregacoes/:congregacaoId/receitas?mes=...", "request": { "method": "GET", "url": "{{baseUrl}}/congregacoes/{{congregacaoId}}/receitas?mes={{mes}}" } },
+        { "name": "GET /congregacoes/:congregacaoId/relatorios/financeiro?mes=...", "request": { "method": "GET", "url": "{{baseUrl}}/congregacoes/{{congregacaoId}}/relatorios/financeiro?mes={{mes}}" } },
+        { "name": "GET Relatório CSV", "request": { "method": "GET", "url": "{{baseUrl}}/congregacoes/{{congregacaoId}}/relatorios/financeiro?mes={{mes}}&formato=csv" } },
+        { "name": "GET Relatório PDF", "request": { "method": "GET", "url": "{{baseUrl}}/congregacoes/{{congregacaoId}}/relatorios/financeiro?mes={{mes}}&formato=pdf" } },
+        { "name": "GET Relatório XLSX", "request": { "method": "GET", "url": "{{baseUrl}}/congregacoes/{{congregacaoId}}/relatorios/financeiro?mes={{mes}}&formato=xlsx" } },
+        { "name": "GET Relatório DOCX", "request": { "method": "GET", "url": "{{baseUrl}}/congregacoes/{{congregacaoId}}/relatorios/financeiro?mes={{mes}}&formato=docx" } }
+      ]
+    },
+    {
+      "name": "Usuários",
+      "item": [
+        {
+          "name": "POST /usuarios",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {"mode": "raw", "raw": "{\n  \"nome\": \"Secretário Base\",\n  \"email\": \"secretario@example.com\",\n  \"senha\": \"123456\",\n  \"igrejaId\": {{igrejaId}},\n  \"role\": \"SECRETARIO\"\n}"},
+            "url": "{{baseUrl}}/usuarios"}
+        },
+        { "name": "GET /usuarios", "request": { "method": "GET", "url": "{{baseUrl}}/usuarios" } },
+        { "name": "GET /usuarios/:id", "request": { "method": "GET", "url": "{{baseUrl}}/usuarios/1" } },
+        {
+          "name": "PUT /usuarios/:id",
+          "request": {
+            "method": "PUT",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {"mode": "raw", "raw": "{\n  \"nome\": \"Secretário Editado\"\n}"},
+            "url": "{{baseUrl}}/usuarios/1"
+          }
+        },
+        { "name": "DELETE /usuarios/:id", "request": { "method": "DELETE", "url": "{{baseUrl}}/usuarios/1" } }
+      ]
+    }
+  ]
+}
