@@ -27,6 +27,12 @@ import { httpMetricsMiddleware } from './middleware/httpMetrics';
 import { metricsTimingMiddleware } from './middleware/observability';
 import { getRedis } from './utils/redis';
 
+// Flags de ambiente para MODO MÍNIMO
+const DISABLE_METRICS = process.env.DISABLE_METRICS === 'true';
+const DISABLE_RATE_LIMIT = process.env.DISABLE_RATE_LIMIT === 'true';
+const DISABLE_SCHEMA_HEADER = process.env.DISABLE_SCHEMA_HEADER === 'true';
+const DISABLE_MULTI_TENANCY = process.env.DISABLE_MULTI_TENANCY === 'true';
+
 // Rate limit simples por schema em memória
 const schemaHits: Record<string, { count: number; windowStart: number }> = {};
 const WINDOW_MS = 60 * 1000;
@@ -82,10 +88,18 @@ app.use(helmet({
 }));
 // Middleware para aceitar JSON com limite
 app.use(express.json({ limit: process.env.JSON_BODY_LIMIT || '1mb' }));
-app.use(metricsTimingMiddleware as any);
-app.use(httpMetricsMiddleware as any);
-app.use(validarSchemaHeader as any);
-app.use(rateLimitPorSchema as any);
+if (!DISABLE_METRICS) {
+  try { app.use(metricsTimingMiddleware as any); } catch {}
+  try { app.use(httpMetricsMiddleware as any); } catch {}
+}
+
+if (!DISABLE_SCHEMA_HEADER) {
+  app.use(validarSchemaHeader as any);
+}
+
+if (!DISABLE_RATE_LIMIT) {
+  app.use(rateLimitPorSchema as any);
+}
 
 // Middleware CORS customizado para headers e métodos
 app.use(function (req: Request, res: Response, next: NextFunction): void {
@@ -138,18 +152,23 @@ app.get('/', (req: Request, res: Response) => {
 });
 
 // Endpoint de métricas Prometheus
-app.get('/metrics', metricsHandler as any);
+if (!DISABLE_METRICS) {
+  app.get('/metrics', metricsHandler as any);
+} else {
+  app.get('/metrics', (req: Request, res: Response) => { res.status(204).end(); });
+}
 
 // Health multi-tenancy (informações simples)
 app.get('/api/health/multi-tenancy', async (req: Request, res: Response) => {
   try {
     // Força prune e coleta de info básica
     pruneIdle?.();
-    // acessa public para testar
+    // Se multi-tenancy desabilitado, só testa schema public
     const prisma = getPrisma('public');
-    const churches = await prisma.church.count();
-  const cache = getCacheMetrics();
-  res.json({ ok: true, churches, cache });
+    let churches = 0;
+    try { churches = await prisma.church.count(); } catch {}
+    const cache = getCacheMetrics();
+    res.json({ ok: true, churches, cache, multiTenancy: !DISABLE_MULTI_TENANCY });
   } catch (e: any) {
     res.status(500).json({ ok: false, error: e.message });
   }

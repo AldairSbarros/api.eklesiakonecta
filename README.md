@@ -198,6 +198,50 @@ docker compose up -d --scale api=2
 7. Start: `npm run start:prod`.
 8. Reverse proxy (ex: Nginx) apontando para porta `3001`.
 
+## Modo Mínimo (Primeira Subida Rápida)
+
+Se você quer apenas validar login e chamadas básicas sem esbarrar em multi‑tenancy, métricas, rate limit ou validação de header, use o compose mínimo incluído no projeto:
+
+```bash
+docker compose -f docker-compose.min.yml up -d --build
+```
+
+Variáveis recomendadas no `.env` (ou já definidas no próprio compose mínimo):
+
+```
+NODE_ENV=production
+PORT=3001
+JWT_SECRET=trocar_por_um_valor_forte
+POSTGRES_USER=postgres
+POSTGRES_PASSWORD=senha
+POSTGRES_DB=eklesia
+DISABLE_METRICS=true
+DISABLE_RATE_LIMIT=true
+DISABLE_SCHEMA_HEADER=true
+DISABLE_MULTI_TENANCY=true
+RUN_MIGRATIONS=true
+RUN_SEED=false
+```
+
+Flags e função:
+
+| Flag | Efeito |
+|------|--------|
+| DISABLE_METRICS | Remove coleta e endpoint de métricas para reduzir overhead |
+| DISABLE_RATE_LIMIT | Desativa limitador por schema (evita bloqueios iniciais) |
+| DISABLE_SCHEMA_HEADER | Ignora validação de header `schema` |
+| DISABLE_MULTI_TENANCY | Usa somente schema `public` |
+
+Depois que validar o fluxo básico (cadastro inicial, login, rotas principais) vá removendo as flags gradualmente.
+
+Sequência sugerida para reativação:
+1. Remova `DISABLE_SCHEMA_HEADER` e passe a enviar `schema: public`.
+2. Remova `DISABLE_MULTI_TENANCY` quando quiser criar novas igrejas via `/api/cadastro-inicial`.
+3. Reative métricas (`/metrics`) para observabilidade.
+4. Reative rate limit em produção.
+
+Esse modo facilita rodar em VPS modesta (1 vCPU / 8GB RAM) sem atritos iniciais.
+
 ### Variáveis importantes em produção
 | Variável | Descrição |
 |----------|-----------|
