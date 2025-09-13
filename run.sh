@@ -3,6 +3,13 @@ set -euo pipefail
 
 COMPOSE_DIR="infra/compose"
 
+# Detecta arquivo .env na raiz para forçar uso com --env-file (evita problemas de resolução quando compose está em subpastas)
+if [ -f .env ]; then
+  COMPOSE_ENV_FILE=(--env-file ./.env)
+else
+  COMPOSE_ENV_FILE=()
+fi
+
 usage() {
   cat <<EOF
 Uso: ./run.sh <acao> <modo> [servico]
@@ -51,7 +58,7 @@ MODO="$1"; shift
 FILE=$(resolve_file "$MODO")
 
 cmd() {
-  docker compose -f "$FILE" "$@"
+  docker compose "${COMPOSE_ENV_FILE[@]}" -f "$FILE" "$@"
 }
 
 case "$ACAO" in

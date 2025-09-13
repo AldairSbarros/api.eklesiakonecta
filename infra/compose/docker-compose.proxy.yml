@@ -5,6 +5,9 @@ version: '3.9'
 services:
   api:
     image: ghcr.io/aldairsbarros/api.eklesiakonecta:latest
+    build:
+      context: ../../
+      dockerfile: Dockerfile
     container_name: eklesia-api
     env_file:
       - ../../.env
