@@ -5,7 +5,20 @@ import { Request } from 'express';
  * Suporta tanto 'schema' quanto 'x-church-schema' para compatibilidade.
  */
 export function extractSchema(req: Request): string | undefined {
-  return req.headers['schema'] as string || req.headers['x-church-schema'] as string;
+  const headerCandidates = [
+    'schema',
+    'x-church-schema',
+    'x-tenant-schema',
+    'x-schema',
+    'x-tenant'
+  ];
+  for (const key of headerCandidates) {
+    const val = req.headers[key] as string | undefined;
+    if (val) return val;
+  }
+  // Fallback: permitir vir no body (ex: login enviando schema explícito)
+  if (req.body && typeof req.body.schema === 'string') return req.body.schema;
+  return undefined;
 }
 
 /**

@@ -70,7 +70,10 @@ const options = {
                 id: { type: 'integer', example: 1 },
                 nome: { type: 'string', example: 'Fulano de Tal' },
                 email: { type: 'string', example: 'pastor@exemplo.com' },
-                perfis: { type: 'array', items: { type: 'string' }, example: ['ADMIN'] }
+                perfil: { type: 'string', example: 'ADMIN' },
+                schema: { type: 'string', example: 'igreja_exemplo_ab12cd34' },
+                congregacaoId: { type: ['integer','null'], example: null },
+                tipo: { type: 'string', example: 'tenant-user', description: 'tenant-user | church-admin | dev-superuser' }
               }
             }
           }
@@ -120,15 +123,16 @@ const options = {
       },
       '/api/auth/login': {
         post: {
-          summary: 'Login de usuário (usar header schema)',
+          summary: 'Login de usuário / admin / dev (multi-fluxo)',
+          description: `Fluxos suportados:\n\n- (A) Primeiro login de uma igreja recém criada: NÃO enviar header de schema. O sistema procura o email na tabela global (church) e retorna tipo=church-admin com schema.\n- (B) Login de usuário de tenant: enviar um dos headers de schema (schema | x-church-schema | x-tenant-schema | x-schema | x-tenant) ou campo schema no body.\n- (C) Dev superuser global: usar email/senha do devUser (seed) e nenhum header de schema. Retorna tipo=dev-superuser.`,
           tags: ['Autenticação'],
           parameters: [
             {
               name: 'schema',
               in: 'header',
-              required: true,
+              required: false,
               schema: { type: 'string' },
-              description: 'Schema da igreja (ex: public para primeiro login)'
+              description: 'Schema do tenant (alternativas: x-church-schema, x-tenant-schema, x-schema, x-tenant). Opcional no primeiro login (church-admin) ou dev-superuser.'
             }
           ],
           requestBody: {
@@ -144,6 +148,7 @@ const options = {
                 'application/json': { schema: { $ref: '#/components/schemas/LoginResponse' } }
               }
             },
+            400: { description: 'Schema ausente quando necessário' },
             401: { description: 'Credenciais inválidas' }
           }
         }

@@ -24,13 +24,23 @@ export const tryDevUserAuth = async (email: string, senha: string, res: Response
   const devUser = await prisma.devUser.findUnique({ where: { email } });
   if (devUser && await bcrypt.compare(senha, devUser.senha)) {
     const token = jwt.sign(
-      { id: devUser.id, superuser: true, perfil: devUser.perfil },
+      { id: devUser.id, perfil: devUser.perfil, email: devUser.email, superuser: true, tipo: 'dev-superuser' },
       process.env.JWT_SECRET!,
       { expiresIn: '1d' }
     );
-    return res.json({ token, perfil: 'SUPERUSER', nome: devUser.nome });
+    res.json({
+      token,
+      usuario: {
+        id: devUser.id,
+        nome: devUser.nome,
+        email: devUser.email,
+        perfil: devUser.perfil,
+        tipo: 'dev-superuser'
+      }
+    });
+    return true;
   }
-  return null;
+  return false;
 };
 
 
@@ -75,8 +85,8 @@ export const login = async (req: Request, res: Response) => {
   const { email, senha } = req.body;
 
     // 1. Tenta autenticar como DevUser (superusuário global)
-    const devUserResult = await tryDevUserAuth(email, senha, res);
-    if (devUserResult) return; // Se autenticou como DevUser, já respondeu
+  const devUserResult = await tryDevUserAuth(email, senha, res);
+  if (devUserResult) return; // já respondeu
 
     // 2. Se não há schema, tenta autenticar como admin de igreja (primeiro login)
     if (!schema) {
@@ -86,7 +96,7 @@ export const login = async (req: Request, res: Response) => {
           const valid = await bcrypt.compare(senha, igreja.password);
           if (valid) {
             const token = jwt.sign(
-              { id: igreja.id, perfil: 'ADMIN', email: igreja.email, schema: igreja.schema },
+              { id: igreja.id, perfil: 'ADMIN', email: igreja.email, schema: igreja.schema, tipo: 'church-admin' },
               secret,
               { expiresIn: '7d' }
             );
@@ -97,7 +107,8 @@ export const login = async (req: Request, res: Response) => {
                 nome: igreja.nome,
                 email: igreja.email,
                 perfil: 'ADMIN',
-                schema: igreja.schema
+                schema: igreja.schema,
+                tipo: 'church-admin'
               }
             });
           }
@@ -124,7 +135,7 @@ export const login = async (req: Request, res: Response) => {
     // Garantir perfil canônico no retorno
   const perfilMapa = mapaPerfis[usuario.perfil as string] || usuario.perfil;
     const token = jwt.sign(
-      { id: usuario.id, perfil: perfilMapa, congregacaoId: usuario.congregacaoId },
+      { id: usuario.id, perfil: perfilMapa, email: usuario.email, schema, congregacaoId: usuario.congregacaoId, tipo: 'tenant-user' },
       secret,
       { expiresIn: '7d' }
     );
@@ -135,7 +146,9 @@ export const login = async (req: Request, res: Response) => {
         nome: usuario.nome,
         email: usuario.email,
         perfil: perfilMapa,
-        congregacaoId: usuario.congregacaoId
+        schema,
+        congregacaoId: usuario.congregacaoId,
+        tipo: 'tenant-user'
       }
     });
   } catch (error: any) {
