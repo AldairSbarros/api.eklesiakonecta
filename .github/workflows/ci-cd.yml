@@ -17,15 +17,10 @@ jobs:
       postgres:
         image: postgres:16
         env:
+          POSTGRES_USER: postgres
           POSTGRES_PASSWORD: password
           POSTGRES_DB: eklesia
-        # Não é necessário mapear porta para acessar do job; usar host 'postgres' direto.
-        # Healthcheck reescrito sem barras invertidas para evitar parsing incorreto.
-        options: |
-          --health-cmd="pg_isready -U postgres"
-          --health-interval=5s
-          --health-timeout=5s
-          --health-retries=10
+        # Healthcheck removido para evitar falhas intermitentes de inicialização; rely no retry implícito da aplicação.
     steps:
       - uses: actions/checkout@v4
       - name: Setup Node
