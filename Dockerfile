@@ -27,7 +27,6 @@ RUN npm ci --legacy-peer-deps
 COPY tsconfig.json ./
 COPY prisma ./prisma
 COPY src ./src
-COPY global.d.ts ./
 
 # Gera client Prisma + build TS (se qualquer arquivo mudar, será refeito)
 RUN npx prisma generate && npm run build
@@ -44,12 +43,12 @@ LABEL org.opencontainers.image.source="https://github.com/AldairSbarros/api.ekle
 ENV NODE_ENV=production \
     TZ=UTC \
     PRISMA_HIDE_UPDATE_MESSAGE=1 \
-    PORT=3001
+    PORT=3000
 
 WORKDIR /app
 
 # Instala somente libs mínimas necessárias em runtime (openssl para TLS/prisma)
-RUN apt-get update && apt-get install -y --no-install-recommends openssl ca-certificates tini && \
+RUN apt-get update && apt-get install -y --no-install-recommends openssl ca-certificates tini curl && \
     rm -rf /var/lib/apt/lists/* && \
     useradd -m -u 1001 -s /bin/bash nodeusr
 
@@ -68,11 +67,11 @@ RUN chmod +x /entrypoint.sh && \
 
 USER nodeusr
 
-EXPOSE 3001
+EXPOSE 3000
 
 # Healthcheck: valida JSON da rota de health
-HEALTHCHECK --interval=30s --timeout=8s --start-period=40s --retries=5 \
-    CMD curl -fsS http://localhost:${PORT}/api/health/multi-tenancy | grep '"ok":true' >/dev/null || exit 1
+HEALTHCHECK --interval=30s --timeout=5s --start-period=25s --retries=5 \
+    CMD curl -fsS http://localhost:${PORT}/health | grep '"status":"ok"' >/dev/null || exit 1
 
 ENTRYPOINT ["/usr/bin/tini","--","/entrypoint.sh"]
 CMD ["npm","run","start:prod"]
