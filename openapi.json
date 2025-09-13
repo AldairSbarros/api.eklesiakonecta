@@ -1,0 +1,2183 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "API EklesiaKonecta",
+    "version": "1.0.0",
+    "description": "Documentação automática da API EklesiaKonecta"
+  },
+  "paths": {
+    "/auth/register": {
+      "post": {
+        "summary": "Registra um novo usuário",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "nome": {
+                    "type": "string"
+                  },
+                  "email": {
+                    "type": "string"
+                  },
+                  "senha": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Usuário registrado com sucesso"
+          }
+        }
+      }
+    },
+    "/auth/login": {
+      "post": {
+        "summary": "Autentica um usuário",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "email": {
+                    "type": "string"
+                  },
+                  "senha": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Usuário autenticado com sucesso"
+          }
+        }
+      }
+    },
+    "/auth/login-membro": {
+      "post": {
+        "summary": "Autentica um membro",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "email": {
+                    "type": "string"
+                  },
+                  "senha": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Membro autenticado com sucesso"
+          }
+        }
+      }
+    },
+    "/api/cadastro-inicial": {
+      "post": {
+        "summary": "Cadastro inicial de uma nova igreja",
+        "description": "Cria uma nova igreja com pastor administrador no sistema multi-tenant",
+        "tags": [
+          "Cadastro Inicial"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "nomeIgreja",
+                  "nomePastor",
+                  "emailPastor",
+                  "senhaPastor"
+                ],
+                "properties": {
+                  "nomeIgreja": {
+                    "type": "string",
+                    "description": "Nome da igreja",
+                    "example": "Igreja Batista Central"
+                  },
+                  "nomePastor": {
+                    "type": "string",
+                    "description": "Nome completo do pastor",
+                    "example": "João Silva"
+                  },
+                  "emailPastor": {
+                    "type": "string",
+                    "format": "email",
+                    "description": "E-mail do pastor para login",
+                    "example": "pastor@igreja.com"
+                  },
+                  "senhaPastor": {
+                    "type": "string",
+                    "description": "Senha para login (mínimo 6 caracteres)",
+                    "example": "123456"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Igreja cadastrada com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Cadastro inicial realizado com sucesso!"
+                    },
+                    "igreja": {
+                      "type": "object",
+                      "properties": {
+                        "nome": {
+                          "type": "string",
+                          "example": "Igreja Batista Central"
+                        },
+                        "schema": {
+                          "type": "string",
+                          "example": "igreja_1721234567890"
+                        }
+                      }
+                    },
+                    "pastor": {
+                      "type": "object",
+                      "properties": {
+                        "nome": {
+                          "type": "string",
+                          "example": "João Silva"
+                        },
+                        "email": {
+                          "type": "string",
+                          "example": "pastor@igreja.com"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Dados obrigatórios não informados",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "example": "Todos os campos são obrigatórios"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno do servidor",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "example": "Erro ao realizar cadastro"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/celulas": {
+      "post": {
+        "summary": "Cria uma nova célula",
+        "responses": {
+          "201": {
+            "description": "Célula criada"
+          }
+        }
+      },
+      "get": {
+        "summary": "Lista todas as células",
+        "responses": {
+          "200": {
+            "description": "Lista de células"
+          }
+        }
+      }
+    },
+    "/celulas/{id}": {
+      "get": {
+        "summary": "Busca uma célula por ID",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Célula encontrada"
+          }
+        }
+      },
+      "put": {
+        "summary": "Atualiza uma célula",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Célula atualizada"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Remove uma célula",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Célula removida"
+          }
+        }
+      }
+    },
+    "/celulas/{id}/localizacao": {
+      "put": {
+        "summary": "Atualiza a localização da célula",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Localização atualizada"
+          }
+        }
+      }
+    },
+    "/celulas/{id}/membros": {
+      "post": {
+        "summary": "Adiciona um membro à célula",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Membro adicionado à célula"
+          }
+        }
+      },
+      "get": {
+        "summary": "Lista os membros de uma célula",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de membros da célula"
+          }
+        }
+      }
+    },
+    "/celulas/{id}/membros/{membroId}": {
+      "delete": {
+        "summary": "Remove um membro da célula",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "membroId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Membro removido da célula"
+          }
+        }
+      }
+    },
+    "/church": {
+      "post": {
+        "summary": "Cria uma nova igreja",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Igreja criada"
+          }
+        }
+      },
+      "get": {
+        "summary": "Lista todas as igrejas",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de igrejas"
+          }
+        }
+      }
+    },
+    "/church/{id}": {
+      "put": {
+        "summary": "Atualiza uma igreja",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Igreja atualizada"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Remove uma igreja",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Igreja removida"
+          }
+        }
+      },
+      "get": {
+        "summary": "Busca uma igreja por ID",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Igreja encontrada"
+          }
+        }
+      }
+    },
+    "/church/{id}/localizacao": {
+      "put": {
+        "summary": "Atualiza a localização da igreja",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Localização da igreja atualizada"
+          }
+        }
+      }
+    },
+    "/congregacoes": {
+      "post": {
+        "summary": "Cria uma nova congregação",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Congregação criada"
+          }
+        }
+      },
+      "get": {
+        "summary": "Lista todas as congregações",
+        "responses": {
+          "200": {
+            "description": "Lista de congregações"
+          }
+        }
+      }
+    },
+    "/congregacoes/{id}": {
+      "put": {
+        "summary": "Atualiza uma congregação",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Congregação atualizada"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Remove uma congregação",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Congregação removida"
+          }
+        }
+      }
+    },
+    "/congregacoes/{id}/localizacao": {
+      "put": {
+        "summary": "Atualiza a localização da congregação",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Localização da congregação atualizada"
+          }
+        }
+      }
+    },
+    "/dashboard/resumo-financeiro": {
+      "get": {
+        "summary": "Retorna o resumo financeiro geral",
+        "responses": {
+          "200": {
+            "description": "Resumo financeiro retornado com sucesso"
+          }
+        }
+      }
+    },
+    "/dashboard/resumo-financeiro-mensal": {
+      "get": {
+        "summary": "Retorna o resumo financeiro mensal",
+        "responses": {
+          "200": {
+            "description": "Resumo financeiro mensal retornado com sucesso"
+          }
+        }
+      }
+    },
+    "/despesas": {
+      "post": {
+        "summary": "Cria uma nova despesa",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Despesa criada"
+          }
+        }
+      },
+      "get": {
+        "summary": "Lista todas as despesas",
+        "responses": {
+          "200": {
+            "description": "Lista de despesas"
+          }
+        }
+      }
+    },
+    "/despesas/{id}": {
+      "get": {
+        "summary": "Busca uma despesa por ID",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Despesa encontrada"
+          }
+        }
+      },
+      "put": {
+        "summary": "Atualiza uma despesa",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Despesa atualizada"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Remove uma despesa",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Despesa removida"
+          }
+        }
+      }
+    },
+    "/devuser": {
+      "post": {
+        "summary": "Cria um novo DevUser (apenas superusuário)",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "nome": {
+                    "type": "string"
+                  },
+                  "email": {
+                    "type": "string"
+                  },
+                  "senha": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "DevUser criado com sucesso"
+          },
+          "401": {
+            "description": "Não autorizado"
+          },
+          "403": {
+            "description": "Permissão insuficiente"
+          }
+        }
+      }
+    },
+    "/encontros": {
+      "post": {
+        "summary": "Cria um novo encontro",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Encontro criado com sucesso"
+          }
+        }
+      },
+      "get": {
+        "summary": "Lista todos os encontros",
+        "responses": {
+          "200": {
+            "description": "Lista de encontros retornada com sucesso"
+          }
+        }
+      }
+    },
+    "/encontros/{id}": {
+      "get": {
+        "summary": "Busca um encontro por ID",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Encontro encontrado com sucesso"
+          }
+        }
+      },
+      "put": {
+        "summary": "Atualiza um encontro",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Encontro atualizado com sucesso"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Remove um encontro",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Encontro removido com sucesso"
+          }
+        }
+      }
+    },
+    "/financeiro/resumo": {
+      "get": {
+        "summary": "Retorna o resumo financeiro",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Resumo financeiro retornado com sucesso"
+          }
+        }
+      }
+    },
+    "/financeiro/relatorio-mensal": {
+      "get": {
+        "summary": "Retorna o relatório financeiro mensal",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Relatório mensal retornado com sucesso"
+          }
+        }
+      }
+    },
+    "/financeiro/relatorio-mensal/snapshot": {
+      "get": {
+        "summary": "Retorna (ou gera) snapshot agregado do relatório financeiro mensal",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "congregacaoId",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "mes",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "ano",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "recomputar",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "true",
+                "false"
+              ]
+            }
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/financeiro/resumo/excel": {
+      "get": {
+        "summary": "Exporta o resumo financeiro em Excel",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "congregacaoId",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "mes",
+            "required": false,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "ano",
+            "required": false,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Arquivo Excel gerado com sucesso",
+            "content": {
+              "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Falta o parâmetro congregacaoId"
+          }
+        }
+      }
+    },
+    "/members": {
+      "post": {
+        "summary": "Cria um novo membro",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Membro criado com sucesso"
+          }
+        }
+      },
+      "get": {
+        "summary": "Lista todos os membros",
+        "responses": {
+          "200": {
+            "description": "Lista de membros retornada com sucesso"
+          }
+        }
+      }
+    },
+    "/members/{id}": {
+      "get": {
+        "summary": "Busca um membro por ID",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Membro encontrado com sucesso"
+          }
+        }
+      },
+      "put": {
+        "summary": "Atualiza um membro",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Membro atualizado com sucesso"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Remove um membro",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Membro removido com sucesso"
+          }
+        }
+      }
+    },
+    "/members/{id}/localizacao": {
+      "put": {
+        "summary": "Atualiza a localização do membro",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Localização do membro atualizada com sucesso"
+          }
+        }
+      }
+    },
+    "/offering": {
+      "post": {
+        "summary": "Cria uma nova oferta/dízimo",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Oferta criada com sucesso"
+          }
+        }
+      },
+      "get": {
+        "summary": "Lista todas as ofertas/dízimos",
+        "responses": {
+          "200": {
+            "description": "Lista de ofertas retornada com sucesso"
+          }
+        }
+      }
+    },
+    "/offering/{id}": {
+      "get": {
+        "summary": "Busca uma oferta/dízimo por ID",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Oferta encontrada com sucesso"
+          }
+        }
+      },
+      "put": {
+        "summary": "Atualiza uma oferta/dízimo",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Oferta atualizada com sucesso"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Remove uma oferta/dízimo",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Oferta removida com sucesso"
+          }
+        }
+      }
+    },
+    "/offering/{id}/receipt-photo": {
+      "put": {
+        "summary": "Atualiza o comprovante da oferta",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "comprovante": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Comprovante atualizado com sucesso"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Remove o comprovante da oferta",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Comprovante removido com sucesso"
+          }
+        }
+      }
+    },
+    "/offering/comprovantes/list": {
+      "get": {
+        "summary": "Lista todos os comprovantes de ofertas",
+        "responses": {
+          "200": {
+            "description": "Lista de comprovantes retornada com sucesso"
+          }
+        }
+      }
+    },
+    "/offering/{id}/upload-comprovante": {
+      "post": {
+        "summary": "Faz upload do comprovante de uma oferta",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "comprovante": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Comprovante enviado com sucesso"
+          },
+          "400": {
+            "description": "Arquivo não enviado"
+          },
+          "500": {
+            "description": "Erro ao enviar comprovante"
+          }
+        }
+      }
+    },
+    "/offering/{id}/download-comprovante": {
+      "get": {
+        "summary": "Faz download do comprovante de uma oferta",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Download realizado com sucesso"
+          },
+          "404": {
+            "description": "Comprovante não encontrado"
+          },
+          "500": {
+            "description": "Erro ao baixar comprovante"
+          }
+        }
+      }
+    },
+    "/offering/{id}/comprovante": {
+      "delete": {
+        "summary": "Remove o comprovante de uma oferta",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Comprovante excluído com sucesso"
+          },
+          "404": {
+            "description": "Comprovante não encontrado"
+          }
+        }
+      }
+    },
+    "/password/solicitar-recuperacao": {
+      "post": {
+        "summary": "Solicita recuperação de senha",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "email": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Solicitação enviada com sucesso"
+          }
+        }
+      }
+    },
+    "/password/redefinir-senha": {
+      "post": {
+        "summary": "Redefine a senha do usuário",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "token": {
+                    "type": "string"
+                  },
+                  "novaSenha": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Senha redefinida com sucesso"
+          }
+        }
+      }
+    },
+    "/pastor": {
+      "post": {
+        "summary": "Cria um novo pastor",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Pastor criado com sucesso"
+          }
+        }
+      },
+      "get": {
+        "summary": "Lista todos os pastores",
+        "responses": {
+          "200": {
+            "description": "Lista de pastores retornada com sucesso"
+          }
+        }
+      }
+    },
+    "/pastor/{id}": {
+      "get": {
+        "summary": "Busca um pastor por ID",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Pastor encontrado com sucesso"
+          }
+        }
+      },
+      "put": {
+        "summary": "Atualiza um pastor",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Pastor atualizado com sucesso"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Remove um pastor",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Pastor removido com sucesso"
+          }
+        }
+      }
+    },
+    "/permissao": {
+      "post": {
+        "summary": "Cria uma nova permissão",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "schema",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Permissão criada com sucesso"
+          },
+          "400": {
+            "description": "Schema não informado no header"
+          }
+        }
+      },
+      "get": {
+        "summary": "Lista todas as permissões",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "schema",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de permissões retornada com sucesso"
+          },
+          "400": {
+            "description": "Schema não informado no header"
+          }
+        }
+      }
+    },
+    "/permissao/{id}": {
+      "get": {
+        "summary": "Busca uma permissão por ID",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "schema",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Permissão encontrada com sucesso"
+          },
+          "400": {
+            "description": "Schema não informado no header"
+          },
+          "404": {
+            "description": "Permissão não encontrada"
+          }
+        }
+      },
+      "put": {
+        "summary": "Atualiza uma permissão",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "schema",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Permissão atualizada com sucesso"
+          },
+          "400": {
+            "description": "Schema não informado no header"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Remove uma permissão",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "schema",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Permissão removida com sucesso"
+          },
+          "400": {
+            "description": "Schema não informado no header"
+          }
+        }
+      }
+    },
+    "/receita": {
+      "post": {
+        "summary": "Cria uma nova receita",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Receita criada com sucesso"
+          }
+        }
+      },
+      "get": {
+        "summary": "Lista todas as receitas",
+        "responses": {
+          "200": {
+            "description": "Lista de receitas retornada com sucesso"
+          }
+        }
+      }
+    },
+    "/receita/{id}": {
+      "get": {
+        "summary": "Busca uma receita por ID",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Receita encontrada com sucesso"
+          }
+        }
+      },
+      "put": {
+        "summary": "Atualiza uma receita",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Receita atualizada com sucesso"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Remove uma receita",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Receita removida com sucesso"
+          }
+        }
+      }
+    },
+    "/relatorio/mensal": {
+      "get": {
+        "summary": "Retorna o relatório mensal",
+        "responses": {
+          "200": {
+            "description": "Relatório mensal retornado com sucesso"
+          }
+        }
+      }
+    },
+    "/relatorio/discipulado/por-discipulador": {
+      "get": {
+        "summary": "Retorna o relatório de discipulado por discipulador",
+        "responses": {
+          "200": {
+            "description": "Relatório de discipulado retornado com sucesso"
+          }
+        }
+      }
+    },
+    "/relatorio/mensal/pdf": {
+      "get": {
+        "summary": "Retorna o relatório mensal em PDF",
+        "responses": {
+          "200": {
+            "description": "PDF do relatório mensal retornado com sucesso"
+          }
+        }
+      }
+    },
+    "/relatorio/celulas": {
+      "get": {
+        "summary": "Retorna o relatório de células",
+        "responses": {
+          "200": {
+            "description": "Relatório de células retornado com sucesso"
+          }
+        }
+      }
+    },
+    "/relatorio/financeiro": {
+      "get": {
+        "summary": "Retorna o relatório financeiro",
+        "responses": {
+          "200": {
+            "description": "Relatório financeiro retornado com sucesso"
+          }
+        }
+      }
+    },
+    "/usuario/login": {
+      "post": {
+        "summary": "Realiza login do usuário",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Login realizado com sucesso"
+          }
+        }
+      }
+    },
+    "/usuario/dizimos": {
+      "get": {
+        "summary": "Lista todos os dízimos da congregação",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de dízimos retornada com sucesso"
+          }
+        }
+      }
+    },
+    "/usuario": {
+      "get": {
+        "summary": "Lista todos os usuários",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de usuários retornada com sucesso"
+          }
+        }
+      },
+      "post": {
+        "summary": "Cria um novo usuário",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Usuário criado com sucesso"
+          }
+        }
+      }
+    },
+    "/usuario/{id}": {
+      "put": {
+        "summary": "Atualiza um usuário",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Usuário atualizado com sucesso"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Remove um usuário",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Usuário removido com sucesso"
+          }
+        }
+      },
+      "get": {
+        "summary": "Busca um usuário por ID",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Usuário encontrado com sucesso"
+          }
+        }
+      }
+    },
+    "/usuario/change-password": {
+      "post": {
+        "summary": "Troca a própria senha",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Senha alterada com sucesso"
+          }
+        }
+      }
+    },
+    "/usuario/upload-comprovante": {
+      "post": {
+        "summary": "Upload de comprovante de dízimo",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "comprovante": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Comprovante enviado com sucesso"
+          }
+        }
+      }
+    },
+    "/usuario-permissao": {
+      "post": {
+        "summary": "Cria uma nova permissão de usuário",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Permissão de usuário criada com sucesso"
+          }
+        }
+      },
+      "get": {
+        "summary": "Lista todas as permissões de usuário",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de permissões de usuário retornada com sucesso"
+          }
+        }
+      }
+    },
+    "/usuario-permissao/{id}": {
+      "put": {
+        "summary": "Atualiza uma permissão de usuário",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Permissão de usuário atualizada com sucesso"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Remove uma permissão de usuário",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Permissão de usuário removida com sucesso"
+          }
+        }
+      }
+    }
+  },
+  "components": {},
+  "tags": []
+}

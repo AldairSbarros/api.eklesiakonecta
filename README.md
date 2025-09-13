@@ -171,7 +171,10 @@ Pré‑requisitos: Docker Engine e (opcional) Docker Compose.
    curl http://localhost:3001/
    curl http://localhost:3001/api/health/multi-tenancy
    ```
-5. Swagger: `http://localhost:3001/api-docs`
+5. Swagger: `http://localhost:3001/api-docs` (se não definir `SWAGGER_ENABLED=false`)
+   - JSON cru: `http://localhost:3001/swagger.json`
+   - Exemplos já incluídos: `/api/cadastro-inicial`, `/api/auth/login`, `/api/health/multi-tenancy`.
+   - Para desabilitar em produção: adicionar no `.env`: `SWAGGER_ENABLED=false`
 
 Rebuild após alterações de código:
 ```bash
@@ -203,7 +206,7 @@ docker compose up -d --scale api=2
 Se você quer apenas validar login e chamadas básicas sem esbarrar em multi‑tenancy, métricas, rate limit ou validação de header, use o compose mínimo incluído no projeto:
 
 ```bash
-docker compose -f docker-compose.min.yml up -d --build
+docker compose -f infra/compose/docker-compose.min.yml up -d --build
 ```
 
 Variáveis recomendadas no `.env` (ou já definidas no próprio compose mínimo):
@@ -241,6 +244,36 @@ Sequência sugerida para reativação:
 4. Reative rate limit em produção.
 
 Esse modo facilita rodar em VPS modesta (1 vCPU / 8GB RAM) sem atritos iniciais.
+
+### Script de Atalhos (run.sh)
+
+Foi adicionado um script para facilitar os comandos dos diferentes modos sem precisar lembrar o caminho completo dos arquivos de compose.
+
+Principais comandos:
+```bash
+# Subir modo mínimo (teste rápido)
+./run.sh up minimal
+
+# Subir produção com HTTPS automático (Caddy)
+./run.sh up proxy
+
+# Atualizar só a API em produção HTTPS
+./run.sh update-api proxy
+
+# Logs da API (modo mínimo)
+./run.sh logs minimal api
+
+# Logs do proxy (Caddy)
+./run.sh logs proxy caddy
+
+# Derrubar stack
+./run.sh down proxy
+
+# Ver estado
+./run.sh ps proxy
+```
+Modos disponíveis: `minimal`, `proxy`, `prod`, `dev`, `external`.
+
 
 ### Bootstrap Automático (Instalação em VPS do zero)
 
@@ -320,6 +353,111 @@ Notas Debian:
    ```
 - Verificar renovação: `sudo certbot renew --dry-run`.
 
+## Opção C: Docker + Caddy (HTTPS Automático)
+
+Se você prefere evitar configuração manual de Nginx + Certbot e quer um fluxo totalmente containerizado com emissão e renovação automática de certificados, use o compose `infra/compose/docker-compose.proxy.yml` com Caddy.
+
+### Quando usar
+- Ambiente simples (1 VPS) sem necessidade de rules Nginx específicas.
+- Quer HTTPS em minutos usando somente variáveis de ambiente.
+- Quer headers de segurança e compressão já ativados por padrão.
+
+### Pré‑requisitos
+- DNS A do subdomínio (`api.seu-dominio.com`) apontando para o IP da VPS.
+- Portas 80 e 443 liberadas no firewall.
+
+### Variáveis necessárias no `.env`
+```
+API_DOMAIN=api.seu-dominio.com
+LETSENCRYPT_EMAIL=seu@email.com
+# (Demais variáveis já usadas pela aplicação: DATABASE_URL ou POSTGRES_*, JWT_SECRET etc.)
+```
+
+### Subindo a stack com proxy automático
+```bash
+docker compose -f infra/compose/docker-compose.proxy.yml up -d
+```
+Caddy irá:
+1. Resolver o Caddyfile em `infra/caddy/Caddyfile`.
+2. Solicitar certificado TLS Let's Encrypt automaticamente.
+3. Aplicar headers de segurança (HSTS, X-Frame-Options, Permissions-Policy etc.).
+4. Redirecionar HTTP -> HTTPS.
+5. Fazer proxy para o container `api` na porta 3001.
+
+Swagger em produção (atrás do Caddy):
+```
+https://SEU_DOMINIO/api-docs
+https://SEU_DOMINIO/swagger.json
+```
+Se não quiser expor a documentação publicamente após validar:
+```
+SWAGGER_ENABLED=false
+```
+e reinicie a API.
+
+Testar:
+```bash
+curl -I https://api.seu-dominio.com/api/health/multi-tenancy
+```
+
+### Estrutura de arquivos/volumes
+| Item | Descrição |
+|------|-----------|
+| `infra/caddy/Caddyfile` | Config principal do proxy |
+| Volume `caddy_data` | Armazena certificados emitidos (persistem entre recriações) |
+| Volume `caddy_config` | Estado interno do Caddy |
+
+### Atualizando a imagem da API
+```bash
+docker compose -f infra/compose/docker-compose.proxy.yml pull api
+docker compose -f infra/compose/docker-compose.proxy.yml up -d api
+```
+
+### Migração de Nginx manual para Caddy
+1. Pare serviços Nginx/Certbot existentes:
+    ```bash
+    sudo systemctl stop nginx
+    sudo systemctl disable nginx --now
+    ```
+2. Libere portas 80/443 (verifique se não há outro processo escutando `sudo lsof -i :80 -i :443`).
+3. Ajuste `.env` com `API_DOMAIN` e `LETSENCRYPT_EMAIL`.
+4. Suba Caddy: `docker compose -f docker-compose.proxy.yml up -d caddy`.
+5. Teste HTTPS. Se OK, pode remover configs antigas de `/etc/nginx` se desejar backup.
+
+### Protegendo /metrics (exemplo simples)
+No `Caddyfile` já existe bloco comentado para rota `/metrics`. Você pode liberar somente para IP interno:
+```caddy
+@metrics path /metrics
+route @metrics {
+   remote_ip 10.0.0.1
+   reverse_proxy api:3001
+}
+```
+Ou adicionar autenticação básica rápida:
+```caddy
+@metrics path /metrics
+basicauth @metrics {
+   admin JDJhJDE0JHFPU0pHVXJ5cVVnVTVjS3lGM0VQS0svZVd2SHZlZkZ0TWdoZ2J6cTcyQ1RHdkxPbEhsb1Vt # hash bcrypt
+}
+reverse_proxy @metrics api:3001
+```
+Gerar hash bcrypt (ajuste rounds conforme CPU):
+```bash
+docker run --rm caddy:2-alpine caddy hash-password --plaintext 'senhaforte'
+```
+
+### Comparação rápida
+| Aspecto | Nginx + Certbot | Caddy |
+|---------|-----------------|-------|
+| Emissão Cert | Script/manual | Automática nativa |
+| Renovação | Cron/timer certbot | Automática transparente |
+| Config inicial | Mais verbosa | Simples (Caddyfile curto) |
+| Headers Segurança | Manual | Incluídos/customizados no Caddyfile |
+| Hot Reload | `nginx -s reload` | Automático ao editar Caddyfile |
+
+Se você precisa de regras avançadas de cache, load balancing customizado complexo ou integrações já prontas em Nginx, continue com Nginx. Para maioria dos casos simples, Caddy reduz superfície de configuração e chance de erro.
+
+
 ## CI/CD (GitHub Actions)
 
 Workflow em `.github/workflows/ci-cd.yml`:
@@ -375,6 +513,14 @@ bash infra/deploy/deploy.sh
 ## Documentação da API
 
 Acesse `/api-docs` após iniciar o servidor para ver a documentação Swagger.
+
+### Exportar arquivo OpenAPI (openapi.json)
+Gerar instantâneo do documento para uso em ferramentas externas (ex: Postman, Insomnia, Mock Servers):
+```bash
+npm run build:openapi
+```
+Arquivo gerado: `openapi.json` na raiz do projeto.
+Se quiser publicar em outro repositório ou importar no front, basta copiar esse arquivo.
 
 Para exemplos detalhados de uso de cada endpoint, consulte o arquivo [`DOCUMENTACAO.md`](./src/docs/DOCUMENTACAO.md). (Atualize-o se adicionar rotas ao fluxo de onboarding.)
 

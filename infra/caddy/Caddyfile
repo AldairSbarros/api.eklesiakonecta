@@ -1,0 +1,55 @@
+{
+	# Email global para ACME/Let's Encrypt
+	email {$LETSENCRYPT_EMAIL}
+	# (Opcional) descomentar para staging/evitar rate limit em testes:
+	# acme_ca https://acme-staging-v02.api.letsencrypt.org/directory
+	# Melhorar segurança de TLS
+	servers :443 {
+		protocols h1 h2
+		# forçar cipher suites modernas (Caddy já aplica defaults sensatos)
+	}
+}
+
+{$API_DOMAIN} {
+	encode gzip zstd
+
+	@health path /health /api/health /api/health/multi-tenancy
+
+	# Headers de segurança
+	headers {
+		Strict-Transport-Security "max-age=63072000; includeSubDomains; preload"
+		X-Frame-Options "DENY"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "no-referrer-when-downgrade"
+		Permissions-Policy "geolocation=(), microphone=(), camera=(), payment=()"
+		X-XSS-Protection "0"
+		Cache-Control "no-store"
+		# Remove header Server padrão
+		-Server
+	}
+
+	# Reverse proxy para o container api (porta interna 3001)
+	reverse_proxy api:3001 {
+		# Health-check passivo: se precisar, ajustar retries/timeouts
+		transport http {
+			response_header_timeout 15s
+			dial_timeout 5s
+		}
+	}
+
+	# (Opcional) Rota interna de métricas protegida por IP simples
+	@metrics path /metrics
+	route @metrics {
+		# Exemplo de whitelisting por IP (substituir 10.0.0.1)
+		# remote_ip 10.0.0.1
+		respond 403 {
+			body "Proibido"
+		}
+		# Para liberar métricas basta remover o respond 403 e descomentar remote_ip
+	}
+}
+
+# Redireciona raiz do domínio (sem www) para o host configurado
+http://{$API_DOMAIN} {
+	redir https://{$API_DOMAIN}{uri} 308
+}

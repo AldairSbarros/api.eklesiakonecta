@@ -117,3 +117,157 @@ Persistem no schema para compatibilidade histórica até limpeza final.
 ---
 
 *Este manual é um guia rápido. Para detalhes técnicos, consulte a documentação da API ou o suporte.*
+
+---
+
+## 7. Como Rodar o Backend (Escolha 1 Cenário)
+
+Você vai ver vários arquivos `docker-compose` no projeto. Use SOMENTE o que faz sentido agora. Abaixo um guia direto:
+
+### Atalho com script `run.sh`
+Se não quiser digitar caminhos dos arquivos, use o script:
+```bash
+./run.sh up minimal      # sobe modo mínimo
+./run.sh up proxy        # produção com HTTPS automático
+./run.sh update-api proxy
+./run.sh logs proxy caddy
+```
+Modos aceitos: `minimal`, `proxy`, `prod`, `dev`, `external`.
+
+### A) Modo Mínimo (para testar rápido)
+Arquivo: `infra/compose/docker-compose.min.yml` (ou `./run.sh up minimal`)
+
+Quando usar: primeira vez no VPS ou máquina local, validar cadastro inicial e login.
+
+Comando:
+```bash
+docker compose -f infra/compose/docker-compose.min.yml up -d --build
+```
+O que sobe: API + Postgres.
+Recursos desligados: multi-tenancy avançada, métricas, rate limit, exigência do header `schema`.
+Testar health:
+```bash
+curl http://SEU_IP:3001/api/health/multi-tenancy
+```
+
+### B) Desenvolvimento Local (editando código)
+Arquivo: `infra/compose/docker-compose.dev.yml` (ou `./run.sh up dev`)
+
+Quando usar: você está codando, quer rebuild automático ao alterar.
+Comando (primeira vez):
+```bash
+docker compose -f infra/compose/docker-compose.dev.yml up -d --build
+```
+Depois só:
+```bash
+docker compose -f infra/compose/docker-compose.dev.yml up -d api
+```
+O que sobe: API (build local) + Redis (se precisar). Postgres pode ser habilitado descomentando no arquivo ou usar outro.
+
+### C) Produção Simples (sem HTTPS interno)
+Arquivo: `infra/compose/docker-compose.prod.yml` (ou `./run.sh up prod`)
+
+Quando usar: você já tem (ou terá) um Nginx no servidor cuidando do HTTPS.
+Comando:
+```bash
+docker compose -f infra/compose/docker-compose.prod.yml up -d
+```
+O que sobe: API (imagem pronta do registro) + Postgres + Redis.
+Depois configure Nginx apontando para porta 3001.
+
+### D) Produção com HTTPS Automático (recomendado para facilitar)
+Arquivo: `infra/compose/docker-compose.proxy.yml` (ou `./run.sh up proxy`)
+
+Quando usar: quer HTTPS rápido sem instalar/configurar Nginx.
+Pré‑requisitos: domínio apontado (DNS) para o servidor.
+`.env` deve ter:
+```
+API_DOMAIN=api.seu-dominio.com
+LETSENCRYPT_EMAIL=seu@email.com
+```
+Comando:
+```bash
+docker compose -f infra/compose/docker-compose.proxy.yml up -d
+```
+O que sobe: API + Postgres + Redis + Caddy (proxy com TLS automático e headers de segurança).
+Testar:
+```bash
+curl -I https://api.seu-dominio.com/api/health/multi-tenancy
+```
+
+### E) API usando Banco Externo
+Arquivo: `infra/compose/docker-compose.external-db.yml` (ou `./run.sh up external`)
+
+Quando usar: seu Postgres está FORA (RDS, outro container já existente, etc.).
+`.env` precisa de `DATABASE_URL` apontando para esse banco.
+Se banco for um container local, antes crie a rede e conecte o Postgres nela:
+```bash
+docker network create eklesia-net
+docker network connect eklesia-net nome_do_container_postgres
+```
+Subir API:
+```bash
+docker compose -f infra/compose/docker-compose.external-db.yml up -d --build
+```
+O que sobe: só a API.
+
+### F) Tabela Resumo
+| Cenário | Arquivo | Sobe o quê | HTTPS | Banco | Para quem |
+|---------|---------|-----------|-------|-------|-----------|
+| Teste rápido | infra/compose/docker-compose.min.yml | API + Postgres | Não | Interno | Iniciante / primeira vez |
+| Dev local | infra/compose/docker-compose.dev.yml | API (+ Redis) | Não | Opcional/local | Quando está programando |
+| Produção simples | infra/compose/docker-compose.prod.yml | API + Postgres + Redis | Não (usar Nginx externo) | Interno | Produção básica |
+| Produção HTTPS fácil | infra/compose/docker-compose.proxy.yml | API + Postgres + Redis + Caddy | Sim (automático) | Interno | Produção prática |
+| Banco externo | infra/compose/docker-compose.external-db.yml | API | Depende (externo) | Externo (RDS/outro) | Quando já migrou DB |
+
+### G) Passos típicos após subir (qualquer modo)
+1. Cadastro inicial: `POST /api/cadastro-inicial`
+2. Login: `POST /api/auth/login`
+3. Usar token e (quando ativado) header `schema: public` ou o schema criado.
+4. Criar congregações, membros, ofertas etc.
+ 5. Documentação Swagger (se habilitada):
+	- UI: `/api-docs`
+	- JSON: `/swagger.json`
+		- Para esconder em produção: adicionar em `.env`: `SWAGGER_ENABLED=false` e reiniciar.
+		- Exemplos incluídos: cadastro inicial, login e health.
+		- Para adicionar novas rotas você pode:
+			1. Editar `src/docs/swaggerConfig.ts` adicionando em `paths` e `components.schemas`.
+			2. (Opcional futuro) Usar comentários JSDoc nos arquivos de rota e apontar no array `apis`.
+
+### H) Reativando recursos após modo mínimo
+Edite `.env` e remova aos poucos:
+- `DISABLE_SCHEMA_HEADER`
+- `DISABLE_MULTI_TENANCY`
+- `DISABLE_METRICS`
+- `DISABLE_RATE_LIMIT`
+
+Recriar container da API (exemplo modo mínimo):
+```bash
+docker compose -f infra/compose/docker-compose.min.yml up -d api
+```
+
+### I) Atualizando imagem (produção)
+```bash
+docker compose -f infra/compose/docker-compose.prod.yml pull api
+docker compose -f infra/compose/docker-compose.prod.yml up -d api
+```
+Ou com proxy:
+```bash
+docker compose -f infra/compose/docker-compose.proxy.yml pull api
+docker compose -f infra/compose/docker-compose.proxy.yml up -d api
+```
+
+### J) Logs rápidos
+```bash
+docker compose -f infra/compose/docker-compose.min.yml logs -f api
+docker compose -f infra/compose/docker-compose.proxy.yml logs -f caddy
+```
+
+Se algo travar, verifique:
+```bash
+docker ps
+docker compose -f infra/compose/docker-compose.min.yml ps
+```
+
+----
+Use sempre o menor arquivo que resolve seu problema atual. Se estiver tudo OK no modo mínimo, só mude quando REALMENTE precisar de HTTPS ou separar o banco.

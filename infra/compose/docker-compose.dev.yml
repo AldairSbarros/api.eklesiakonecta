@@ -1,0 +1,41 @@
+# (movido) Desenvolvimento local (API + Redis)
+# docker compose -f infra/compose/docker-compose.dev.yml up -d --build
+
+version: '3.9'
+services:
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+  api:
+    build:
+      context: .
+    image: eklesia-api:dev
+    environment:
+      NODE_ENV: development
+      DATABASE_URL: ${DATABASE_URL}
+      JWT_SECRET: ${JWT_SECRET}
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379}
+      RUN_MIGRATIONS: ${RUN_MIGRATIONS:-true}
+      RUN_SEED: ${RUN_SEED:-false}
+      TENANT_RATE_LIMIT: ${TENANT_RATE_LIMIT:-600}
+    depends_on:
+      - redis
+    ports:
+      - "3001:3001"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:3001/api/health/multi-tenancy | grep '"ok":true'"]
+      interval: 30s
+      timeout: 8s
+      retries: 5
+      start_period: 40s
+networks:
+  default: {}
+volumes:
+  pgdata: {}

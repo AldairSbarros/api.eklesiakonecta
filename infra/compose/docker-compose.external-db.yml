@@ -1,0 +1,29 @@
+# (movido) API usando Postgres EXTERNO
+# docker compose -f infra/compose/docker-compose.external-db.yml up -d --build
+
+## Pré: docker network create eklesia-net (se precisar) e conectar banco externo
+version: '3.9'
+services:
+  api:
+    build: .
+    image: eklesia-api:latest
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: ${DATABASE_URL}
+      JWT_SECRET: ${JWT_SECRET}
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379}
+      RUN_MIGRATIONS: ${RUN_MIGRATIONS:-true}
+      RUN_SEED: ${RUN_SEED:-false}
+    ports:
+      - "3001:3001"
+    restart: unless-stopped
+    networks: [eklesia-net]
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:3001/api/health/multi-tenancy | grep '"ok":true'"]
+      interval: 30s
+      timeout: 8s
+      retries: 5
+      start_period: 40s
+networks:
+  eklesia-net:
+    external: true

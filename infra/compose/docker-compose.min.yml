@@ -1,0 +1,41 @@
+# (movido) Compose mínimo
+# Uso igual antes:
+# docker compose -f infra/compose/docker-compose.min.yml up -d --build
+
+version: '3.9'
+services:
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-senha}
+      POSTGRES_DB: ${POSTGRES_DB:-eklesia}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+  api:
+    build: .
+    environment:
+      NODE_ENV: production
+      PORT: 3001
+      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-senha}@postgres:5432/${POSTGRES_DB:-eklesia}?schema=public
+      JWT_SECRET: ${JWT_SECRET:-dev_jwt_secret_trocar}
+      RUN_MIGRATIONS: "true"
+      RUN_SEED: "false"
+      DISABLE_METRICS: "true"
+      DISABLE_RATE_LIMIT: "true"
+      DISABLE_SCHEMA_HEADER: "true"
+      DISABLE_MULTI_TENANCY: "true"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "3001:3001"
+    restart: unless-stopped
+volumes:
+  pgdata: {}

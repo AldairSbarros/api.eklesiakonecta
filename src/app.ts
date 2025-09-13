@@ -151,6 +151,17 @@ app.get('/', (req: Request, res: Response) => {
   res.send('API Eklesia Konecta rodando');
 });
 
+// Swagger UI e JSON (se habilitado)
+const SWAGGER_ENABLED = process.env.SWAGGER_ENABLED !== 'false';
+if (SWAGGER_ENABLED) {
+  // UI
+  app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+  // JSON cru
+  app.get('/swagger.json', (req: Request, res: Response) => {
+    res.json(swaggerSpec as any);
+  });
+}
+
 // Endpoint de métricas Prometheus
 if (!DISABLE_METRICS) {
   app.get('/metrics', metricsHandler as any);
