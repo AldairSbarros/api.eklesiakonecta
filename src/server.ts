@@ -1,14 +1,6 @@
-import dotenv from 'dotenv';
-dotenv.config();
+import { app } from './app';
 
-import app from './app';
-
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-  console.log(`Servidor do Eklesia Konecta rodando na porta ${PORT}`);
-  if (process.env.NODE_ENV === 'production') {
-    console.log('Documentação Swagger disponível em https://api.eklesia.app.br/api-docs');
-  } else {
-    console.log(`Documentação Swagger disponível em http://localhost:${PORT}/api-docs`);
-  }
+  console.log(`API single-tenant ouvindo na porta ${PORT}`);
 });
