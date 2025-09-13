@@ -43,18 +43,26 @@ jobs:
             prisma-${{ hashFiles('prisma/schema.prisma') }}-
       - name: Generate Prisma Client
         run: npx prisma generate
-      - name: Wait for Postgres
+      - name: Install PostgreSQL client
+        run: sudo apt-get update && sudo apt-get install -y postgresql-client
+      - name: Wait for Postgres (robusto)
         shell: bash
-        run: |
-          echo "Aguardando Postgres ficar disponível..."
-          for i in {1..30}; do
-            if pg_isready -h postgres -p 5432 -U postgres > /dev/null 2>&1; then
-              echo "Postgres está pronto (tentativa $i)."; break; fi
-            echo "Tentativa $i ainda não disponível..."; sleep 2;
-            if [ $i -eq 30 ]; then echo "Postgres não ficou pronto a tempo"; exit 1; fi
-          done
         env:
           PGPASSWORD: password
+        run: |
+          echo "Aguardando Postgres (até 120s)..."
+          for i in {1..60}; do
+            if psql "postgresql://postgres:password@postgres:5432/postgres" -c 'select 1' >/dev/null 2>&1; then
+              echo "Postgres respondeu (tentativa $i)."; READY=1; break; fi
+            echo "[${i}] ainda não disponível..."; sleep 2;
+          done
+          if [ -z "${READY:-}" ]; then
+            echo "Postgres não respondeu a tempo. Capturando logs do serviço...";
+            echo "--- docker ps ---"; docker ps -a;
+            echo "--- logs container postgres ---"; docker logs $(docker ps -a --filter "name=postgres" --format '{{.ID}}') || true;
+            echo "--- fim logs ---";
+            exit 1;
+          fi
       - name: Run migrations
         run: npx prisma migrate deploy
       - name: Run tests
