@@ -146,10 +146,12 @@ jobs:
         id: secrets_check
         run: |
           MISSING=0
-          for S in DEPLOY_HOST DEPLOY_USER DEPLOY_KEY; do
-            if [ -z "${{ secrets[format('%s', S)] }}" ]; then
-              echo "Secret $S ausente"; MISSING=1; fi
-          done
+          if [ -z "${{ secrets.DEPLOY_HOST }}" ]; then
+            echo "Secret DEPLOY_HOST ausente"; MISSING=1; fi
+          if [ -z "${{ secrets.DEPLOY_USER }}" ]; then
+            echo "Secret DEPLOY_USER ausente"; MISSING=1; fi
+          if [ -z "${{ secrets.DEPLOY_KEY }}" ]; then
+            echo "Secret DEPLOY_KEY ausente"; MISSING=1; fi
           echo "missing=$MISSING" >> $GITHUB_OUTPUT
       - name: Pular deploy (se secrets ausentes)
         if: steps.secrets_check.outputs.missing == '1'
@@ -158,9 +160,9 @@ jobs:
         if: steps.secrets_check.outputs.missing == '0'
         uses: appleboy/ssh-action@v1.0.3
         with:
-          host: ${{ secrets.DEPLOY_HOST }}
-          username: ${{ secrets.DEPLOY_USER }}
-          key: ${{ secrets.DEPLOY_KEY }}
+          host: ${{ secrets.DEPLOY_HOST || '' }}
+          username: ${{ secrets.DEPLOY_USER || '' }}
+          key: ${{ secrets.DEPLOY_KEY || '' }}
           script: |
             cd /caminho/para/api.eklesiakonecta-backend
             git pull origin main

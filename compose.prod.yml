@@ -1,4 +1,4 @@
-version: '3.9'
+## Compose V2: chave 'version' é obsoleta e foi removida.
 
 networks:
   eklesia_new_net: {}
@@ -8,7 +8,7 @@ volumes:
 
 services:
   db:
-    image: postgres:16
+    image: postgres:15
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: senha
@@ -38,7 +38,9 @@ services:
       - eklesia_new_net
     restart: unless-stopped
     healthcheck:
-      test: ["CMD-SHELL", "curl -fsS http://localhost:3000/health | grep '"status":"ok"'" ]
+      test:
+        - CMD-SHELL
+        - curl -fsS http://localhost:3000/health | grep -q '"status":"ok"'
       interval: 30s
       timeout: 5s
       retries: 5
