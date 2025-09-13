@@ -1,43 +1,75 @@
-# Eklesia Konecta - Backend
+# Eklesia Konecta API (Single-Tenant Mínima)
 
-Backend completo para gestão de igrejas, congregações, células, discipulado, financeiro e relatórios, com multi‑tenancy por schema PostgreSQL e fluxo de onboarding público.
+Esta é a reconstrução BIG BANG em modo **single-tenant simplificado**. Todo o código multi‑tenancy anterior foi arquivado em `src_legacy/` e não participa do build atual.
 
-## Funcionalidades Principais
+## Escopo Atual
+- Health simples: `GET /health`
+- CRUD Usuários:
+   - `POST /usuarios` { nome, email, senha }
+   - `GET /usuarios`
+   - `GET /usuarios/:id`
+   - `PUT /usuarios/:id` { nome }
+   - `DELETE /usuarios/:id`
 
-- Onboarding público de nova igreja (`POST /api/cadastro-inicial`)
-- Cadastro e gestão autenticada de igrejas/congregações (`/api/igrejas`, `/api/congregacoes`)
-- Gestão de usuários, permissões e autenticação JWT
-- Módulo de células e discipulado
-- Controle financeiro (ofertas, despesas, relatórios)
-- Dashboard financeiro anual
-- Upload e gestão de comprovantes
-- Notificações por e-mail e WhatsApp
-- Relatórios em JSON e PDF
-- Testes automatizados (Jest/Supertest)
-- Documentação automática (Swagger)
+Sem autenticação / perfis / schemas dinâmicos neste estágio para máxima estabilidade.
 
-## Instalação
+## Requisitos
+- Node 20+
+- PostgreSQL acessível (DATABASE_URL)
 
+## Setup Rápido
 ```bash
-git clone https://github.com/seuusuario/eklesia-konecta.git
-cd eklesia-konecta/backend
 npm install
+npx prisma migrate dev
+npm run dev
+```
+Abra: http://localhost:3000/health
+
+## Exemplo de Uso (CRUD Usuário)
+```bash
+curl -X POST http://localhost:3000/usuarios \
+   -H 'Content-Type: application/json' \
+   -d '{"nome":"Admin","email":"admin@example.com","senha":"123456"}'
+
+curl http://localhost:3000/usuarios
 ```
 
-## Configuração
+## Produção (Docker Compose)
+```bash
+docker compose -f docker-compose.prod.yml up -d --build
+```
+API em: http://localhost:3000
 
-- Crie um arquivo `.env` com as variáveis de ambiente necessárias (veja exemplo em `.env.example`).
+## Estrutura Atual
+```
+prisma/
+   schema.prisma
+src/
+   app.ts
+   server.ts
+   tests/app.min.test.ts
+src_legacy/   # Código antigo completo (multi-tenant) preservado
+```
 
-## Banco de Dados
+## Testes
+```bash
+npm test -- src/tests/app.min.test.ts
+```
 
-- Rode as migrations:
-  ```bash
-  npx prisma migrate dev
-  ```
+## Próximos Passos (Opcional)
+1. Introduzir autenticação JWT básica.
+2. Adicionar entidades essenciais (igreja, congregacao) em modelo único.
+3. Remover definitivamente `src_legacy/` quando não mais necessário.
+4. Reativar métricas / observabilidade de forma incremental.
 
-## Multi-Tenancy por Schema
+## Aviso sobre o Código Legacy
+Todo o ecossistema anterior (multi-tenancy, métricas avançadas, rate limit, swagger, redis, permissões) continua disponível apenas para consulta em `src_legacy/` e poderá ser reaproveitado seletivamente no futuro.
 
-O backend utiliza isolamento por schema PostgreSQL.
+## Licença
+MIT
+
+---
+Reconstrução mínima concluída. Expanda somente conforme necessidade real de negócio.
 
 ### Provisionamento de tenant
 Fluxo de criação ocorre no endpoint público de onboarding:
