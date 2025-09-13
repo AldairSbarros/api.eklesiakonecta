@@ -1,4 +1,4 @@
-import express, { Request, Response } from 'express';
+import express from 'express';
 import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcrypt';
 
@@ -6,7 +6,7 @@ const prisma = new PrismaClient();
 const app = express();
 app.use(express.json());
 
-app.get('/health', async (_req: Request, res: Response) => {
+app.get('/health', async (_req, res) => {
   try {
     await prisma.$queryRaw`SELECT 1`;
     res.json({ status: 'ok' });
@@ -15,7 +15,7 @@ app.get('/health', async (_req: Request, res: Response) => {
   }
 });
 
-app.post('/usuarios', async (req: Request, res: Response) => {
+app.post('/usuarios', async (req, res) => {
   const { nome, email, senha } = req.body || {};
   if (!nome || !email || !senha) {
     return res.status(400).json({ message: 'nome, email, senha são obrigatórios' });
@@ -31,19 +31,19 @@ app.post('/usuarios', async (req: Request, res: Response) => {
   }
 });
 
-app.get('/usuarios', async (_req: Request, res: Response) => {
+app.get('/usuarios', async (_req, res) => {
   const usuarios = await prisma.usuario.findMany({ orderBy: { id: 'asc' } });
   res.json(usuarios.map(u => ({ id: u.id, nome: u.nome, email: u.email })));
 });
 
-app.get('/usuarios/:id', async (req: Request, res: Response) => {
+app.get('/usuarios/:id', async (req, res) => {
   const id = Number(req.params.id);
   const usuario = await prisma.usuario.findUnique({ where: { id } });
   if (!usuario) return res.status(404).json({ message: 'Não encontrado' });
   res.json({ id: usuario.id, nome: usuario.nome, email: usuario.email });
 });
 
-app.put('/usuarios/:id', async (req: Request, res: Response) => {
+app.put('/usuarios/:id', async (req, res) => {
   const id = Number(req.params.id);
   const { nome } = req.body || {};
   if (!nome) return res.status(400).json({ message: 'nome obrigatório' });
@@ -55,7 +55,7 @@ app.put('/usuarios/:id', async (req: Request, res: Response) => {
   }
 });
 
-app.delete('/usuarios/:id', async (req: Request, res: Response) => {
+app.delete('/usuarios/:id', async (req, res) => {
   const id = Number(req.params.id);
   try {
     await prisma.usuario.delete({ where: { id } });
@@ -65,7 +65,7 @@ app.delete('/usuarios/:id', async (req: Request, res: Response) => {
   }
 });
 
-app.get('/', (_req: Request, res: Response) => {
+app.get('/', (_req, res) => {
   res.json({ name: 'API Eklesia Konecta - Single Tenant', status: 'ok' });
 });
 
