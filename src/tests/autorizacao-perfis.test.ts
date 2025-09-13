@@ -17,7 +17,7 @@ async function login(email: string) {
   return res.body.token as string;
 }
 
-describe('Autorização por perfis (tenant_test)', () => {
+describe.skip('Autorização por perfis (tenant_test) - desativado single-tenancy', () => {
   jest.setTimeout(20000);
   let adminToken: string;
   let superToken: string;

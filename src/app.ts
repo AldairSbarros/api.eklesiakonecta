@@ -185,6 +185,11 @@ app.get('/api/health/multi-tenancy', async (req: Request, res: Response) => {
   }
 });
 
+// Health mínimo (sem tocar no banco) para liveness rápido
+app.get('/api/health/ping', (req: Request, res: Response) => {
+  res.json({ ok: true, ts: Date.now() });
+});
+
 // Cron para backup agendado (desabilitado em ambiente de teste para não segurar Jest)
 if (process.env.NODE_ENV !== 'test') {
   const cron = require('node-cron');

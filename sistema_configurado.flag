@@ -1,9 +1,9 @@
 {
   "configurado": true,
-  "dataConfiguracao": "2025-09-13T16:22:14.184Z",
+  "dataConfiguracao": "2025-09-13T17:51:06.427Z",
   "primeiraIgreja": {
-    "nome": "Igreja Fluxos",
-    "schema": "igreja_fluxos_mfih55pw_32db",
-    "email": "igreja1757780530464@teste.com"
+    "nome": "Igreja Teste RemoveUser",
+    "schema": "igreja_teste_removeuser_mfikbh22_4a7b",
+    "email": "igreja_removeuser_1757785863930@eklesia.app.br"
   }
 }

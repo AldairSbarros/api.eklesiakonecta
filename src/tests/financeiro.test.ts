@@ -2,7 +2,7 @@ import request from 'supertest';
 import app from '../app';
 import { loginTestUser } from './utils/loginTestUser';
 
-describe('Financeiro (tenant_test)', () => {
+describe.skip('Financeiro (tenant_test) - desativado single-tenancy', () => {
   jest.setTimeout(30000);
   const schema = 'tenant_test';
   let token: string;

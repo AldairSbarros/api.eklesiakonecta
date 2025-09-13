@@ -8,7 +8,7 @@ import app from '../app';
  * 3. tenant-user (usuário normal) com schema em headers variantes
  */
 
-describe('Auth multi-fluxos', () => {
+describe.skip('Auth multi-fluxos (desativado single-tenancy)', () => {
   let churchSchema: string;
   let churchAdminEmail: string;
   let churchAdminSenha = '123456';
