@@ -1,131 +1,17 @@
 import { Request, Response } from 'express';
-import * as celulaService from '../services/celula.service';
-import { extractSchema, validateSchema } from '../utils/headerUtils';
+import { CelulaService } from '../services/celula.service';
 
-// Criar célula
-export const create = async (req: Request, res: Response) => {
-  try {
-    const schema = extractSchema(req);
-    const validationError = validateSchema(schema);
-    if (validationError.error) {
-      return res.status(400).json(validationError);
+export const CelulaController = {
+  async create(req: Request, res: Response) {
+    if (!req.body.congregacaoId && req.params.congregacaoId) {
+      req.body.congregacaoId = Number(req.params.congregacaoId);
     }
-    const celula = await celulaService.createCelula(schema!, req.body);
-    res.status(201).json(celula);
-  } catch (error: any) {
-    res.status(400).json({ error: error.message });
-  }
+    const c = await CelulaService.create(req.body);
+    res.status(201).json(c);
+  },
+  async list(_req: Request, res: Response) { res.json(await CelulaService.list()); },
+  async get(req: Request, res: Response) { res.json(await CelulaService.get(Number(req.params.id))); },
+  async update(req: Request, res: Response) { res.json(await CelulaService.update(Number(req.params.id), req.body)); },
+  async remove(req: Request, res: Response) { await CelulaService.remove(Number(req.params.id)); res.json({ message: 'Removido' }); },
+  async listByCongregacao(req: Request, res: Response) { res.json(await CelulaService.listByCongregacao(Number(req.params.congregacaoId))); }
 };
-
-export const atualizarLocalizacao = async (req: Request, res: Response) => {
-  try {
-  const schema = (req.headers['x-church-schema'] || req.headers['schema']) as string;
-    if (!schema) return res.status(400).json({ error: 'Schema não informado no header.' });
-    const { id } = req.params;
-    const { latitude, longitude } = req.body;
-    const celula = await celulaService.updateCelula(schema, Number(id), { latitude, longitude });
-    res.json(celula);
-  } catch (error: any) {
-    res.status(400).json({ error: error.message });
-  }
-};
-
-
-// Listar células
-export const list = async (req: Request, res: Response) => {
-  try {
-    const schema = extractSchema(req);
-    const validationError = validateSchema(schema);
-    if (validationError.error) {
-      return res.status(400).json(validationError);
-    }
-    const celulas = await celulaService.listCelulas(schema!);
-    res.json(celulas);
-  } catch (error: any) {
-    res.status(400).json({ error: error.message });
-  }
-};
-
-// Obter célula por ID
-export const get = async (req: Request, res: Response) => {
-  try {
-    const schema = extractSchema(req);
-    const validationError = validateSchema(schema);
-    if (validationError.error) {
-      return res.status(400).json(validationError);
-    }
-    const { id } = req.params;
-    const celula = await celulaService.getCelula(schema!, Number(id));
-    if (!celula) return res.status(404).json({ error: 'Célula não encontrada.' });
-    res.json(celula);
-  } catch (error: any) {
-    res.status(400).json({ error: error.message });
-  }
-};
-
-// Atualizar célula
-export const update = async (req: Request, res: Response) => {
-  try {
-    const schema = extractSchema(req);
-    const validationError = validateSchema(schema);
-    if (validationError.error) {
-      return res.status(400).json(validationError);
-    }
-    const { id } = req.params;
-    const celula = await celulaService.updateCelula(schema!, Number(id), req.body);
-    res.json(celula);
-  } catch (error: any) {
-    res.status(400).json({ error: error.message });
-  }
-};
-
-// Remover célula
-export const remove = async (req: Request, res: Response) => {
-  try {
-    const schema = extractSchema(req);
-    const validationError = validateSchema(schema);
-    if (validationError.error) {
-      return res.status(400).json(validationError);
-    }
-    const { id } = req.params;
-    await celulaService.deleteCelula(schema!, Number(id));
-    res.json({ message: 'Célula removida com sucesso.' });
-  } catch (error: any) {
-    res.status(400).json({ error: error.message });
-  }
-};
-
-export const addMembro = async (req: Request, res: Response) => {
-  try {
-    const schema = extractSchema(req);
-    const validationError = validateSchema(schema);
-    if (validationError.error) {
-      return res.status(400).json(validationError);
-    }
-    const { id } = req.params;
-    const { membroId } = req.body;
-    const membro = await celulaService.addMembroCelula(schema!, Number(id), Number(membroId));
-    res.status(201).json(membro);
-  } catch (error: any) {
-    res.status(400).json({ error: error.message });
-  }
-};
-
-export const removeMembro = async (req: Request, res: Response) => {
-  try {
-    const schema = extractSchema(req);
-    const validationError = validateSchema(schema);
-    if (validationError.error) {
-      return res.status(400).json(validationError);
-    }
-    const { membroId } = req.params;
-    await celulaService.removeMembroCelula(schema!, Number(membroId));
-    res.json({ message: 'Membro removido da célula.' });
-  } catch (error: any) {
-    res.status(400).json({ error: error.message });
-  }
-};
-
-export function listarMembros(listarMembros: any): import("express-serve-static-core").RequestHandler<import("express-serve-static-core").ParamsDictionary, any, any, import("qs").ParsedQs, Record<string, any>> {
-	throw new Error('Function not implemented.');
-}

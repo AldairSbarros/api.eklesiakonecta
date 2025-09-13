@@ -1,17 +1,246 @@
 # Eklesia Konecta API (Single-Tenant Mínima)
 
-Esta é a reconstrução BIG BANG em modo **single-tenant simplificado**. Todo o código multi‑tenancy anterior foi arquivado em `src_legacy/` e não participa do build atual.
+Esta é a reconstrução BIG BANG em modo **single-tenant simplificado**. O antigo código multi‑tenancy foi removido definitivamente neste estágio (marco: limpeza 2025-09-13). Um archive externo (`backup-pre-bigbang-20250913.tar.gz`) preserva o estado anterior caso seja preciso referência histórica.
 
 ## Escopo Atual
 - Health simples: `GET /health`
 - CRUD Usuários:
-   - `POST /usuarios` { nome, email, senha }
+   - `POST /usuarios` { nome, email, senha, igrejaId?, role? }
    - `GET /usuarios`
    - `GET /usuarios/:id`
-   - `PUT /usuarios/:id` { nome }
+   - `PUT /usuarios/:id` { nome, igrejaId?, role? }
    - `DELETE /usuarios/:id`
+ - CRUD Igrejas:
+   - `POST /igrejas` { nome }
+   - `GET /igrejas`
+   - `GET /igrejas/:id`
+   - `PUT /igrejas/:id` { nome }
+   - `DELETE /igrejas/:id`
+   - `GET /igrejas/:igrejaId/congregacoes`
+   - `POST /igrejas/:igrejaId/congregacoes` { nome }
+ - CRUD Congregações:
+   - `POST /congregacoes` { nome, igrejaId }
+   - `GET /congregacoes`
+   - `GET /congregacoes/:id`
+   - `PUT /congregacoes/:id` { nome }
+   - `DELETE /congregacoes/:id`
+ - CRUD Gerações:
+   - `GET /geracoes`
+   - `GET /geracoes/:id`
+   - `GET /congregacoes/:congregacaoId/geracoes`
+   - `POST /congregacoes/:congregacaoId/geracoes` { nome, liderGeracaoMembroId? }
+   - `PUT /geracoes/:id` { nome, liderGeracaoMembroId|null }
+   - `DELETE /geracoes/:id`
+ - CRUD Células (agora com geração e metadados reunião):
+    - `POST /celulas` { nome, congregacaoId, geracaoId?, diaSemana?, horario?, localReuniao? }
+    - `GET /celulas`
+    - `GET /celulas/:id`
+    - `PUT /celulas/:id` { nome, geracaoId|null, diaSemana|null, horario|null, localReuniao|null, liderMembroId?|null, viceLiderMembroId?|null, secretarioMembroId?|null, tesoureiroMembroId?|null, anfitriaoMembroId?|null }
+    - `DELETE /celulas/:id`
+    - `GET /congregacoes/:congregacaoId/celulas`
+    - `POST /congregacoes/:congregacaoId/celulas` { nome, geracaoId?, diaSemana?, horario?, localReuniao? }
+ - CRUD Membros (agora com flags de status/aptidão):
+    - `POST /membros` { nome, celulaId, email?, telefone? }
+    - `GET /membros`
+    - `GET /membros/:id`
+    - `PUT /membros/:id` { nome, telefone?, celulaId? }
+    - `DELETE /membros/:id`
+    - `GET /celulas/:celulaId/membros`
+    - `POST /celulas/:celulaId/membros` { nome, email?, telefone? }
+    - Flags automáticas: `ativoNaCongregacao` e `aptoLiderar` (ver seção Discipulado)
+ - Discipulado (pipeline de etapas):
+    - `GET /membros/:membroId/etapas`
+    - `POST /membros/:membroId/etapas` { etapa, dataConclusao?, observacao? }
+ - Financeiro: Receitas + Relatório mensal com export (JSON/CSV/PDF/XLSX/DOCX)
+
+## Hierarquia de Domínio
+
+Fluxo estrutural principal (cadeia obrigatória):
+
+Igreja -> Congregação -> (Geração ->) Célula -> Membro
+
+Regras:
+- Uma Igreja possui várias Congregações.
+- Uma Congregação possui várias Células e várias Gerações.
+- (Opcional) Uma Célula pode estar vinculada a uma Geração.
+- Uma Célula possui vários Membros.
+- Um Membro pertence exatamente a UMA Célula (e por consequência a uma Congregação e Igreja via cadeia / e a geração se a célula estiver vinculada).
+
+Usuários (tabela `Usuario`) não são membros automaticamente. Eles representam perfis operacionais do sistema e podem (opcionalmente) estar vinculados a uma Igreja (`igrejaId`).
+
+Papéis suportados (`Usuario.role`):
+- PASTOR
+- DIRIGENTE
+- TESOUREIRO
+- SECRETARIO
+
+Se nenhum `role` for enviado, assume `SECRETARIO` por default.
+
+Observação: Regras de autorização ainda não implementadas — o `role` hoje é apenas informativo para futura lógica de permissão.
 
 Sem autenticação / perfis / schemas dinâmicos neste estágio para máxima estabilidade.
+
+## Módulo Financeiro: Receitas (Dízimos, Ofertas, Votos)
+
+Objetivo: Registrar entradas financeiras por Congregação com numeração sequencial de recibos, evidência (foto opcional) e relatório mensal com distribuição 33% / 67%.
+
+### Modelo (`Receita`)
+Campos principais:
+- `id` (Int)
+- `congregacaoId` (FK obrigatória)
+- `membroId` (FK opcional – usado principalmente para Dízimo)
+- `tipo` enum: `DIZIMO` | `OFERTA` | `VOTO` | `OFERTA_ALCADA`
+- `formaPagamento` enum: `ESPECIE` | `PIX`
+- `valor` Decimal(10,2)
+- `data` DateTime (default `now()`)
+- `numeroRecibo` Int (sequencial por congregação – constraint `unique(congregacaoId, numeroRecibo)`)
+- `cultoDescricao` String? (ex: "Culto Noite", usado em ofertas de culto)
+- `fotoPath` String? (arquivo salvo em `uploads/receitas/`)
+- `observacao` String?
+
+### Sequenciamento de Recibo
+Para cada congregação o próximo número é calculado buscando o maior `numeroRecibo` existente e incrementando +1. Não há reinício mensal (sequência contínua). Caso queira reiniciar por mês futuramente, trocar a estratégia para considerar intervalo de datas.
+
+### Endpoints
+1. `POST /congregacoes/:congregacaoId/receitas` (multipart/form-data)
+    - Campos (partes de formulário):
+       - `tipo` (obrigatório)
+       - `valor` (obrigatório, string ou número, ex: "150.00")
+       - `formaPagamento` (obrigatório)
+       - `membroId` (opcional – obrigatório conceitualmente para DÍZIMO se quiser vincular ao dizimista)
+       - `cultoDescricao` (opcional – relevante p/ ofertas)
+       - `data` (opcional – ISO; se omitido = agora)
+       - `observacao` (opcional)
+       - `foto` (opcional – arquivo evidência)
+    - Retorna `201` com JSON da Receita criada.
+
+2. `GET /congregacoes/:congregacaoId/receitas?mes=YYYY-MM`
+    - Lista receitas da congregação filtrando por mês UTC (intervalo `[primeiroDia, primeiroDiaMesSeguinte)`). Se `mes` omitido, lista todas.
+
+3. `GET /congregacoes/:congregacaoId/relatorios/financeiro?mes=YYYY-MM`
+    - Gera relatório agregado do mês informado (parâmetro `mes` obrigatório).
+    - Resposta exemplo:
+```json
+{
+   "mes": "2025-09",
+   "congregacaoId": 1,
+   "resumo": {
+      "totalDizimos": 150,
+      "totalOfertas": 80,
+      "totalVotos": 0,
+      "totalOfertasAlcadas": 0,
+      "totalContribuicoes": 230,
+      "parteCongregacao33": 75.9,
+      "parteTesourariaGeral67": 154.1
+   },
+   "dizimos": [
+      { "numeroRecibo": 1, "data": "2025-09-13T14:30:00.000Z", "valor": 100, "membro": "Membro Diz" },
+      { "numeroRecibo": 2, "data": "2025-09-13T15:10:00.000Z", "valor": 50,  "membro": "Membro Diz" }
+   ],
+   "ofertas": [
+      { "numeroRecibo": 3, "data": "2025-09-13T16:05:00.000Z", "valor": 80, "culto": "Culto Noite" }
+   ],
+   "votos": [],
+   "ofertasAlcadas": [],
+   "totalDizimistas": 1
+}
+```
+
+### Exemplo de Envio Multipart (curl)
+```bash
+curl -X POST http://localhost:3000/congregacoes/1/receitas \
+   -F tipo=DIZIMO \
+   -F valor=150.00 \
+   -F formaPagamento=ESPECIE \
+   -F membroId=10 \
+   -F observacao="Dízimo de Setembro" \
+   -F foto=@/caminho/para/imagem.jpg
+```
+
+Ou oferta de culto sem membro:
+```bash
+curl -X POST http://localhost:3000/congregacoes/1/receitas \
+   -F tipo=OFERTA \
+   -F valor=80.00 \
+   -F formaPagamento=PIX \
+   -F cultoDescricao="Culto Noite" 
+```
+
+### Regra de Distribuição Financeira
+O relatório aplica:
+- `parteCongregacao33 = totalContribuicoes * 0.33` (arredondado para 2 casas via `toFixed(2)`)
+- `parteTesourariaGeral67 = totalContribuicoes - parteCongregacao33`
+
+Se precisar de regras diferenciadas por tipo (ex: separar votos de ofertas), isso pode ser evoluído mantendo o shape do JSON.
+
+### Arquivos de Evidência
+- Salvos em: `uploads/receitas/`
+- Servidos estaticamente em: `GET /uploads/receitas/<arquivo>`
+- (Melhorias futuras): limite de tamanho, MIME whitelist, expurgo/rotina de limpeza.
+
+### Validação de Upload
+- Tipos aceitos: `image/jpeg`, `image/png`
+- Tamanho máximo: 5MB
+- Erros possíveis:
+   - 400 `Tipo de arquivo não permitido. Use JPEG ou PNG.`
+   - 400 `Arquivo excede 5MB`
+
+### Cache do Relatório
+- Cache in-memory por chave `(congregacaoId, mes)`
+- TTL: 60 segundos.
+- Primeira chamada gera e armazena; chamadas subsequentes dentro do TTL retornam cache (inclusive para exportações em outros formatos).
+
+### Exportações do Relatório
+Endpoint: `GET /congregacoes/:congregacaoId/relatorios/financeiro?mes=YYYY-MM&formato=<fmt>`
+
+Formatos suportados:
+- `json` (default se `formato` ausente ou não reconhecido)
+- `csv` (header `Content-Type: text/csv`)
+- `pdf` (header `Content-Type: application/pdf`)
+- `xlsx` (header Excel OpenXML)
+- `docx` (header Word OpenXML)
+
+Todos retornam `Content-Disposition: attachment; filename="relatorio-<congregacaoId>-<mes>.<ext>`.
+
+#### Exemplo CSV
+```bash
+curl -L "http://localhost:3000/congregacoes/1/relatorios/financeiro?mes=2025-09&formato=csv" -o relatorio.csv
+```
+
+#### Exemplo PDF
+```bash
+curl -L "http://localhost:3000/congregacoes/1/relatorios/financeiro?mes=2025-09&formato=pdf" -o relatorio.pdf
+```
+
+#### Exemplo XLSX
+```bash
+curl -L "http://localhost:3000/congregacoes/1/relatorios/financeiro?mes=2025-09&formato=xlsx" -o relatorio.xlsx
+```
+
+#### Exemplo DOCX
+```bash
+curl -L "http://localhost:3000/congregacoes/1/relatorios/financeiro?mes=2025-09&formato=docx" -o relatorio.docx
+```
+
+### Notas de Arredondamento
+- Cálculos internos usam `Prisma.Decimal` para evitar imprecisão de ponto flutuante.
+- Conversão para número ocorre apenas ao montar a resposta/export.
+- Distribuição 33% usa multiplicação e arredondamento a 2 casas; diferença de centavos fica na parte 67%.
+
+### Testes Automatizados
+Cobertos em `src/tests/receita.test.ts`:
+- Sequência de recibos (1,2,3)
+- Soma de dízimos, ofertas e cálculo de distribuição
+- Contagem de dizimistas distintos
+
+### Possíveis Evoluções Futuras
+- Tornar foto obrigatória para certos tipos
+- Adicionar campo `origem` (ex: EVENTO, CAMPANHA) / tags
+- Permissões de criação (ex: apenas TESOUREIRO ou PASTOR)
+- Ajustar política de arredondamento para somar exatamente (ex: algoritmo de distribuição centavo a centavo)
+- Fechamento de mês (lock para impedir alterações retroativas)
+
+---
 
 ## Requisitos
 - Node 20+
@@ -34,11 +263,47 @@ curl -X POST http://localhost:3000/usuarios \
 curl http://localhost:3000/usuarios
 ```
 
-## Produção (Docker Compose)
+## Docker (Novo Setup 2025-09)
+
+Foram removidos os antigos arquivos `docker-compose.yml`, `docker-compose.external-db.yml` e configurações multi‑tenancy/redis. Novo layout minimal:
+
+Arquivos criados:
+- `compose.dev.yml` (desenvolvimento) – app (porta host 3100) + Postgres
+- `compose.prod.yml` (produção simplificada) – app (porta host 3200) + Postgres
+- `Dockerfile` minimal multi-stage (build → runtime)
+
+### Subir ambiente de desenvolvimento
 ```bash
-docker compose -f docker-compose.prod.yml up -d --build
+docker compose -f compose.dev.yml up -d --build
 ```
-API em: http://localhost:3000
+Health: http://localhost:3100/health
+
+### Subir produção local
+```bash
+docker compose -f compose.prod.yml up -d --build
+```
+Health: http://localhost:3200/health
+
+### Variáveis padrão
+O compose já injeta:
+- `DATABASE_URL=postgresql://postgres:senha@db:5432/eklesia?schema=public`
+- `NODE_ENV` (development / production)
+
+Se quiser customizar portas, ajuste o mapeamento nos arquivos compose.
+
+### Migrações
+Executar dentro do container (se necessário):
+```bash
+docker compose -f compose.dev.yml exec app npx prisma migrate dev
+```
+Em produção:
+```bash
+docker compose -f compose.prod.yml exec api npx prisma migrate deploy
+```
+
+### Notas
+- Redis, rate limiting multi‑tenant e health `/api/health/multi-tenancy` foram removidos.
+- Use rede `eklesia_new_net` para coexistir com outra API sem conflito.
 
 ## Estrutura Atual
 ```
@@ -47,8 +312,17 @@ prisma/
 src/
    app.ts
    server.ts
-   tests/app.min.test.ts
-src_legacy/   # Código antigo completo (multi-tenant) preservado
+   controllers/
+   routes/
+   services/
+   utils/
+   validators/ (quando aplicável)
+   tests/
+uploads/
+Dockerfile
+compose.dev.yml
+compose.prod.yml
+README.md
 ```
 
 ## Testes
@@ -57,19 +331,111 @@ npm test -- src/tests/app.min.test.ts
 ```
 
 ## Próximos Passos (Opcional)
-1. Introduzir autenticação JWT básica.
-2. Adicionar entidades essenciais (igreja, congregacao) em modelo único.
-3. Remover definitivamente `src_legacy/` quando não mais necessário.
-4. Reativar métricas / observabilidade de forma incremental.
+1. Introduzir autenticação JWT básica (middleware + geração de token e roles funcionais).
+2. Implementar autorização baseada em roles nas rotas sensíveis.
+3. Refinar tipos Prisma removendo casts temporários (`as any`) gradualmente.
+4. Reativar métricas / observabilidade (HTTP timings, counters) de forma incremental sem reintroduzir complexidade desnecessária.
+5. Adicionar testes de unidade para services de Receita, Membro e Célula (atualmente focados no fluxo mínimo integrado).
+6. Documentar endpoints via OpenAPI/Swagger gerado automaticamente (avaliar `zod` + `zod-to-openapi`).
 
-## Aviso sobre o Código Legacy
-Todo o ecossistema anterior (multi-tenancy, métricas avançadas, rate limit, swagger, redis, permissões) continua disponível apenas para consulta em `src_legacy/` e poderá ser reaproveitado seletivamente no futuro.
+## Histórico de Legacy
+O ecossistema anterior (multi-tenancy, métricas avançadas, rate limit, swagger, redis, permissões extensas) foi removido para simplificar a base e acelerar evolução. Caso seja necessário resgatar alguma parte, utilize o arquivo de backup listado acima.
 
 ## Licença
 MIT
 
 ---
 Reconstrução mínima concluída. Expanda somente conforme necessidade real de negócio.
+
+## Arquitetura Modular (Refatoração 2025-09)
+
+Esta codebase foi recentemente refatorada para uma arquitetura em camadas clara. O objetivo principal foi remover lógica de negócio do `app.ts` (antes monolítico) e distribuir responsabilidades de forma coesa e testável.
+
+### Camadas
+1. Routes (`src/routes/*`)
+   - Apenas definem paths e métodos HTTP.
+   - Usam `asyncHandler` para propagar exceções ao middleware global de erro.
+2. Controllers (`src/controllers/*`)
+   - Tradução HTTP ↔ serviço: extraem params, query, body e chamam o service correspondente.
+   - Não contêm regras de negócio ou acesso direto a Prisma (exceto casos específicos como agregações de relatório no controller de Receitas).
+3. Services (`src/services/*`)
+   - Contêm validações, regras de domínio, sequenciamento (`numeroRecibo`), consistência de relacionamentos (ex: geração pertence à mesma congregação, líder de célula pertence àquela célula, pipeline de discipulado em ordem, etc.).
+   - Única camada (fora de relatórios) que toca `prisma` diretamente.
+4. Infra/Utils (`src/core`, `src/utils`)
+   - `core/prisma.ts`: singleton do Prisma Client.
+   - `utils/AppError.ts`: erro sem stack ruidosa + status HTTP.
+   - `utils/asyncHandler.ts`: wrapper para evitar try/catch repetitivo.
+5. App Bootstrap (`src/app.ts`)
+   - Monta middlewares genéricos, estáticos, healthcheck, registra roteadores e define handlers 404 + erro.
+
+### Fluxo de Requisição
+```
+Request -> Route -> Controller -> Service -> Prisma -> Service -> Controller -> Response
+```
+Erros de domínio lançam `AppError` e retornam JSON padronizado `{ message }`. Erros não tratados geram log e resposta 500 genérica.
+
+### Tratamento de Erros
+Middleware final verifica:
+- `instanceof AppError` → responde com `status` + `message`.
+- Erros de upload (código Multer / mensagem de tipo inválido).
+- Fallback: loga e retorna `{ message: 'Erro interno' }`.
+
+### Uploads
+Gerenciado em `receita.routes.ts` com Multer (limite 5MB + whitelist MIME). Caminho relativo salvo em `fotoPath` e servido via `/uploads`.
+
+### Relatórios Financeiros
+Concentração no `receita.controller.ts`:
+- Geração do payload mensal (agregação por tipo) + cache in-memory (TTL 60s).
+- Exportações multi-formato (JSON/CSV/PDF/XLSX/DOCX) usando libs especializadas.
+
+### Pipeline de Discipulado
+`DiscipuladoService` garante ordem das etapas. Flags de membro (`ativoNaCongregacao`, `aptoLiderar`) são atualizadas quando etapas chave entram.
+
+### Rotas Nested
+Para criar rapidamente entidades atreladas, rotas nested são suportadas:
+- `/congregacoes/:congregacaoId/celulas`
+- `/celulas/:celulaId/membros`
+Controllers agora injetam automaticamente `congregacaoId` ou `celulaId` no body se ausentes, garantindo compatibilidade com testes e evitando 400 indevido.
+
+### Testabilidade
+Com a separação, testes focam fluxos reais HTTP enquanto services ficam elegíveis para futuros testes unitários. Toda a suite (66 testes) cobre os caminhos principais (CRUDs, sequenciamento financeiro, relatório, pipeline de discipulado, nested, etc.).
+
+### Decisões de Design
+- Mantido cálculo de distribuição financeira simples (33% / 67%) dentro do controller para manter proximidade com formatos de exportação.
+- Mantido cache em memória (não Redis) para simplicidade — invalidação natural via TTL.
+- `@ts-nocheck` temporário em alguns services/controladores onde o legado foi transportado rapidamente; sugerido remover gradualmente fortalecendo tipos.
+
+### Próximas Evoluções Técnicas (Sugestões)
+1. Introduzir camada de DTO/validation (Zod ou class-validator) nas bordas HTTP.
+2. Extração do código de relatório para `services/relatorioFinanceiro.service.ts` + testes dedicados.
+3. Abstrair cache para adaptadores (Memory / Redis) mantendo contrato simples.
+4. Adicionar autenticação e autorização baseada em roles agora que endpoints estão organizados.
+5. Remover `@ts-nocheck` e adicionar tipos explícitos (inputs/outputs) nos services.
+6. Gerar OpenAPI automaticamente (ex: `tsoa` ou `express-oas-generator`) a partir das rotas.
+
+### Estado da Tipagem (2025-09-13)
+Todos os `@ts-nocheck` foram removidos. Para acelerar a transição, alguns pontos utilizam casts controlados (`as any` / tipos flexíveis) — especialmente no `receita.controller.ts` onde há agregação e exportação multiformato. Próximos passos para fortalecimento:
+
+- Substituir tipos flexíveis por `Prisma.ReceitaGetPayload<...>` específicos.
+- Criar tipos de DTO de entrada/saída por service (ex: `CreateReceitaDTO`, `RelatorioFinanceiroDTO`).
+- Ativar/confirmar flags estritas já presentes (`strict: true`); considerar `exactOptionalPropertyTypes` se relevante.
+- Eliminar casts residuais após garantir assinatura exata dos objetos retornados.
+
+Meta de curto prazo: zero `as any` em services; controller de relatório isolado poderá ser o último a receber endurecimento final.
+
+### Resumo da Refatoração
+| Aspecto                | Antes (Monolítico)                     | Depois (Modular)                       |
+|------------------------|----------------------------------------|----------------------------------------|
+| `app.ts`               | ~centenas de linhas com toda lógica    | ~60 linhas apenas de composição        |
+| Regras de Negócio      | Misturadas em rotas                    | Centralizadas em services              |
+| Exportações Relatório  | Inline no app                          | Controller dedicado                    |
+| Testes                 | Dependentes de ordem implícita         | Estáveis (camadas claras)              |
+| Erros                  | `res.status(...).json` espalhado       | `AppError` + middleware global         |
+| Próxima manutenção     | Arriscada                              | Localizada por domínio                 |
+
+---
+Se encontrar qualquer rota ainda com lógica de negócio extensa, mover gradualmente para o service correspondente mantendo o mesmo padrão.
+
 
 ### Provisionamento de tenant
 Fluxo de criação ocorre no endpoint público de onboarding:

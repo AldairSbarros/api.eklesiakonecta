@@ -9,11 +9,179 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum Role {
+  PASTOR
+  DIRIGENTE
+  TESOUREIRO
+  SECRETARIO
+}
+
+enum ReceitaTipo {
+  DIZIMO
+  OFERTA
+  VOTO
+  OFERTA_ALCADA
+}
+
+enum FormaPagamento {
+  ESPECIE
+  PIX
+}
+
+enum DiaSemana {
+  SEG
+  TER
+  QUA
+  QUI
+  SEX
+  SAB
+  DOM
+}
+
+enum EtapaDiscipulado {
+  MINICURSO
+  ANDANDO_COM_CRISTO
+  AGORA_QUE_SOU_DE_CRISTO
+  CONSOLIDACAO
+  ESCOLA_LIDERES_N1
+  ESCOLA_LIDERES_N2
+  ESCOLA_LIDERES_N3
+  ENCONTRO_COM_DEUS
+  BATISMO_AGUAS
+  LIBERADO_LIDERAR
+}
+
 model Usuario {
   id        Int      @id @default(autoincrement())
   nome      String
   email     String   @unique
   senhaHash String
+  igrejaId  Int?     // usuário pode estar associado a uma igreja
+  igreja    Igreja?  @relation(fields: [igrejaId], references: [id])
+  role      Role     @default(SECRETARIO)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model Igreja {
+  id        Int      @id @default(autoincrement())
+  nome      String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  congregacoes Congregacao[]
+  usuarios     Usuario[]
+}
+
+model Congregacao {
+  id        Int      @id @default(autoincrement())
+  nome      String
+  igrejaId  Int
+  igreja    Igreja   @relation(fields: [igrejaId], references: [id], onDelete: Cascade)
+  celulas   Celula[]
+  geracoes  Geracao[]
+  receitas  Receita[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@unique([igrejaId, nome])
+}
+
+model Celula {
+  id             Int      @id @default(autoincrement())
+  nome           String
+  congregacaoId  Int
+  congregacao    Congregacao @relation(fields: [congregacaoId], references: [id], onDelete: Cascade)
+  membros        Membro[]
+  geracaoId      Int?
+  geracao        Geracao?   @relation(fields: [geracaoId], references: [id], onDelete: SetNull)
+  // cargos (referenciam membros desta mesma célula - validado em código)
+  liderMembroId        Int?
+  liderMembro          Membro? @relation("CelulaLider", fields: [liderMembroId], references: [id])
+  viceLiderMembroId    Int?
+  viceLiderMembro      Membro? @relation("CelulaViceLider", fields: [viceLiderMembroId], references: [id])
+  secretarioMembroId   Int?
+  secretarioMembro     Membro? @relation("CelulaSecretario", fields: [secretarioMembroId], references: [id])
+  tesoureiroMembroId   Int?
+  tesoureiroMembro     Membro? @relation("CelulaTesoureiro", fields: [tesoureiroMembroId], references: [id])
+  anfitriaoMembroId    Int?
+  anfitriaoMembro      Membro? @relation("CelulaAnfitriao", fields: [anfitriaoMembroId], references: [id])
+  diaSemana       DiaSemana?
+  horario         String?
+  localReuniao    String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  @@unique([congregacaoId, nome])
+  @@index([geracaoId])
+}
+
+model Membro {
+  id        Int      @id @default(autoincrement())
+  nome      String
+  email     String?  @unique
+  telefone  String?
+  celulaId  Int
+  celula    Celula   @relation(fields: [celulaId], references: [id], onDelete: Cascade)
+  receitas  Receita[]
+  etapas    MembroEtapa[]
+  ativoNaCongregacao Boolean @default(false)
+  aptoLiderar        Boolean @default(false)
+  // cargos onde este membro atua (relacionamentos inversos)
+  lideraCelulas        Celula[] @relation("CelulaLider")
+  viceLideraCelulas    Celula[] @relation("CelulaViceLider")
+  secretariaCelulas    Celula[] @relation("CelulaSecretario")
+  tesourariaCelulas    Celula[] @relation("CelulaTesoureiro")
+  anfitriaCelulas      Celula[] @relation("CelulaAnfitriao")
+  lideraGeracoes       Geracao[] @relation("LiderGeracao")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@index([celulaId])
+}
+
+model Geracao {
+  id        Int      @id @default(autoincrement())
+  nome      String
+  congregacaoId Int
+  congregacao Congregacao @relation(fields: [congregacaoId], references: [id], onDelete: Cascade)
+  celulas   Celula[]
+  liderGeracaoMembroId Int?
+  liderGeracaoMembro   Membro? @relation("LiderGeracao", fields: [liderGeracaoMembroId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@unique([congregacaoId, nome])
+  @@index([congregacaoId])
+}
+
+model MembroEtapa {
+  id        Int      @id @default(autoincrement())
+  membroId  Int
+  membro    Membro   @relation(fields: [membroId], references: [id], onDelete: Cascade)
+  etapa     EtapaDiscipulado
+  dataConclusao DateTime?
+  observacao String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@unique([membroId, etapa])
+  @@index([membroId])
+  @@index([etapa])
+}
+
+model Receita {
+  id             Int            @id @default(autoincrement())
+  congregacaoId  Int
+  congregacao    Congregacao    @relation(fields: [congregacaoId], references: [id], onDelete: Cascade)
+  membroId       Int?
+  membro         Membro?        @relation(fields: [membroId], references: [id])
+  tipo           ReceitaTipo
+  formaPagamento FormaPagamento
+  valor          Decimal        @db.Decimal(10,2)
+  data           DateTime       @default(now())
+  numeroRecibo   Int
+  cultoDescricao String?
+  fotoPath       String?
+  observacao     String?
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  @@unique([congregacaoId, numeroRecibo])
+  @@index([congregacaoId, data])
+  @@index([membroId])
+  @@index([tipo])
 }

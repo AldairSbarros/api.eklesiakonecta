@@ -1,94 +1,38 @@
 import { Router } from 'express';
-import * as receitasController from '../controllers/receitas.controller';
+import { ReceitaController } from '../controllers/receita.controller';
+import { asyncHandler } from '../utils/asyncHandler';
+import multer from 'multer';
+import path from 'path';
+import fs from 'fs';
 
-const router = Router();
+const uploadsDir = path.join(process.cwd(), 'uploads', 'receitas');
+fs.mkdirSync(uploadsDir, { recursive: true });
+const storage = multer.diskStorage({
+  destination: (_req, _file, cb) => cb(null, uploadsDir),
+  filename: (_req, file, cb) => cb(null, Date.now() + '-' + file.originalname.replace(/[^a-zA-Z0-9_.-]/g, '_'))
+});
+const upload = multer({
+  storage,
+  limits: { fileSize: 5 * 1024 * 1024 },
+  fileFilter: (_req, file, cb) => {
+    const allowed = ['image/jpeg', 'image/png'];
+    if (!allowed.includes(file.mimetype)) return cb(new Error('Tipo de arquivo não permitido. Use JPEG ou PNG.'));
+    cb(null, true);
+  }
+});
 
-// Helper para funções async
-const asyncHandler = (fn: any) => (req: any, res: any, next: any) =>
-  Promise.resolve(fn(req, res, next)).catch(next);
+const r = Router();
+r.post('/congregacoes/:congregacaoId/receitas', (req, res, next) => {
+  upload.single('foto')(req, res, err => {
+    if (err) {
+      if (err.message?.includes('Tipo de arquivo')) return res.status(400).json({ message: err.message });
+      if ((err as any).code === 'LIMIT_FILE_SIZE') return res.status(400).json({ message: 'Arquivo excede 5MB' });
+      return res.status(500).json({ message: 'Falha no upload', error: err.message });
+    }
+    next();
+  });
+}, asyncHandler(ReceitaController.create));
 
-/**
- * @swagger
- * /receita:
- *   post:
- *     summary: Cria uma nova receita
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *     responses:
- *       201:
- *         description: Receita criada com sucesso
- */
-router.post('/', asyncHandler(receitasController.criarReceita));
-
-/**
- * @swagger
- * /receita:
- *   get:
- *     summary: Lista todas as receitas
- *     responses:
- *       200:
- *         description: Lista de receitas retornada com sucesso
- */
-router.get('/', asyncHandler(receitasController.listarReceitas));
-
-/**
- * @swagger
- * /receita/{id}:
- *   get:
- *     summary: Busca uma receita por ID
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: string
- *     responses:
- *       200:
- *         description: Receita encontrada com sucesso
- */
-router.get('/:id', asyncHandler(receitasController.obterReceita));
-
-/**
- * @swagger
- * /receita/{id}:
- *   put:
- *     summary: Atualiza uma receita
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: string
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *     responses:
- *       200:
- *         description: Receita atualizada com sucesso
- */
-router.put('/:id', asyncHandler(receitasController.atualizarReceita));
-
-/**
- * @swagger
- * /receita/{id}:
- *   delete:
- *     summary: Remove uma receita
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: string
- *     responses:
- *       204:
- *         description: Receita removida com sucesso
- */
-router.delete('/:id', asyncHandler(receitasController.removerReceita));
-export default router;
+r.get('/congregacoes/:congregacaoId/receitas', asyncHandler(ReceitaController.list));
+r.get('/congregacoes/:congregacaoId/relatorios/financeiro', asyncHandler(ReceitaController.relatorio));
+export default r;

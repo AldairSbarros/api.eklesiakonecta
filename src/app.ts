@@ -1,16 +1,23 @@
-// @ts-nocheck
 import express from 'express';
-import { PrismaClient } from '@prisma/client';
-import bcrypt from 'bcrypt';
+import path from 'path';
+import { prisma } from './core/prisma';
+import usuarioRoutes from './routes/usuario.routes';
+import igrejaRoutes from './routes/igreja.routes';
+import congregacaoRoutes from './routes/congregacao.routes';
+import geracaoRoutes from './routes/geracao.routes';
+import celulaRoutes from './routes/celula.routes';
+import membroRoutes from './routes/membro.routes';
+import receitaRoutes from './routes/receita.routes';
+import { AppError } from './utils/AppError';
 
-const prisma = new PrismaClient();
 const app = express();
 app.use(express.json());
 
-// Usar Router separado para evitar confusão de overload de tipos do Express
-const router = express.Router();
+// Arquivos estáticos (uploads)
+app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
 
-router.get('/health', async (_req, res) => {
+// Healthcheck
+app.get('/health', async (_req, res) => {
   try {
     await prisma.$queryRaw`SELECT 1`;
     res.json({ status: 'ok' });
@@ -19,61 +26,32 @@ router.get('/health', async (_req, res) => {
   }
 });
 
-// @ts-ignore forçando handler simples
-router.post('/usuarios', async (req, res) => {
-  const { nome, email, senha } = req.body || {};
-  if (!nome || !email || !senha) {
-    return res.status(400).json({ message: 'nome, email, senha são obrigatórios' });
-  }
-  try {
-    const existing = await prisma.usuario.findUnique({ where: { email } });
-    if (existing) return res.status(409).json({ message: 'Email já cadastrado' });
-    const senhaHash = await bcrypt.hash(senha, 10);
-    const usuario = await prisma.usuario.create({ data: { nome, email, senhaHash } });
-    res.status(201).json({ id: usuario.id, nome: usuario.nome, email: usuario.email });
-  } catch (e: any) {
-    res.status(500).json({ message: 'Erro ao criar usuário', error: e.message });
-  }
+// Root
+app.get('/', (_req, res) => res.json({ name: 'API Eklesia Konecta - Single Tenant', status: 'ok' }));
+
+// Montagem de rotas de domínio
+app.use(usuarioRoutes);
+app.use(igrejaRoutes);
+app.use(congregacaoRoutes);
+app.use(geracaoRoutes);
+app.use(celulaRoutes);
+app.use(membroRoutes);
+app.use(receitaRoutes);
+
+// 404 handler
+app.use((req, res, next) => {
+  if (res.headersSent) return next();
+  res.status(404).json({ message: 'Rota não encontrada' });
 });
 
-router.get('/usuarios', async (_req, res) => {
-  const usuarios = await prisma.usuario.findMany({ orderBy: { id: 'asc' } });
-  res.json(usuarios.map(u => ({ id: u.id, nome: u.nome, email: u.email })));
+// Error handler central
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+app.use((err: any, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
+  if (err instanceof AppError) return res.status(err.status).json({ message: err.message });
+  if (err?.code === 'LIMIT_FILE_SIZE') return res.status(400).json({ message: 'Arquivo excede 5MB' });
+  if (err?.message?.includes('Tipo de arquivo')) return res.status(400).json({ message: err.message });
+  console.error('Erro não tratado:', err);
+  res.status(500).json({ message: 'Erro interno' });
 });
-
-router.get('/usuarios/:id', async (req, res) => {
-  const id = Number(req.params.id);
-  const usuario = await prisma.usuario.findUnique({ where: { id } });
-  if (!usuario) return res.status(404).json({ message: 'Não encontrado' });
-  res.json({ id: usuario.id, nome: usuario.nome, email: usuario.email });
-});
-
-router.put('/usuarios/:id', async (req, res) => {
-  const id = Number(req.params.id);
-  const { nome } = req.body || {};
-  if (!nome) return res.status(400).json({ message: 'nome obrigatório' });
-  try {
-    const updated = await prisma.usuario.update({ where: { id }, data: { nome } });
-    res.json({ id: updated.id, nome: updated.nome, email: updated.email });
-  } catch (e: any) {
-    res.status(404).json({ message: 'Não encontrado' });
-  }
-});
-
-router.delete('/usuarios/:id', async (req, res) => {
-  const id = Number(req.params.id);
-  try {
-    await prisma.usuario.delete({ where: { id } });
-    res.json({ message: 'Removido' });
-  } catch {
-    res.status(404).json({ message: 'Não encontrado' });
-  }
-});
-
-router.get('/', (_req, res) => {
-  res.json({ name: 'API Eklesia Konecta - Single Tenant', status: 'ok' });
-});
-
-app.use(router);
 
 export { app };

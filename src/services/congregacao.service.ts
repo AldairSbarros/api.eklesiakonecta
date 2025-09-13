@@ -1,36 +1,29 @@
-import { getPrisma } from "../utils/prismaDynamic";
+import { prisma } from '../core/prisma';
+const prismaAny = prisma as any;
+import { AppError } from '../utils/AppError';
 
-// Todas as funções agora recebem o schema como parâmetro
-
-export const createCongregacao = async (schema: string, data: any) => {
-  const prisma = getPrisma(schema);
-  const { nome, churchId, endereco } = data;
-  if (!churchId) throw new Error('churchId é obrigatório');
-  return prisma.congregacao.create({
-    data: {
-      nome,
-      churchId,
-      endereco
-    }
-  });
-};
-
-export const listCongregacoes = async (schema: string) => {
-  const prisma = getPrisma(schema);
-  return prisma.congregacao.findMany();
-};
-
-export const updateCongregacao = async (schema: string, id: number, data: any) => {
-  const prisma = getPrisma(schema);
-  return prisma.congregacao.update({
-    where: { id },
-    data,
-  });
-};
-
-export const deleteCongregacao = async (schema: string, id: number) => {
-  const prisma = getPrisma(schema);
-  return prisma.congregacao.delete({
-    where: { id },
-  });
+export const CongregacaoService = {
+  async create(data: { nome: string; igrejaId: number }) {
+    const { nome, igrejaId } = data;
+    if (!nome || !igrejaId) throw new AppError('nome e igrejaId são obrigatórios');
+    const igreja = await prismaAny.igreja.findUnique({ where: { id: igrejaId } });
+    if (!igreja) throw new AppError('igrejaId inválido');
+    const existing = await prismaAny.congregacao.findFirst({ where: { igrejaId, nome } });
+    if (existing) throw new AppError('Nome já usado para esta igreja', 409);
+    return prismaAny.congregacao.create({ data: { nome, igrejaId } });
+  },
+  list() { return prismaAny.congregacao.findMany({ orderBy: { id: 'asc' } }); },
+  async get(id: number) {
+    const item = await prismaAny.congregacao.findUnique({ where: { id } });
+    if (!item) throw new AppError('Não encontrado', 404);
+    return item;
+  },
+  async update(id: number, nome: string) {
+    if (!nome) throw new AppError('nome é obrigatório');
+    try { return await prismaAny.congregacao.update({ where: { id }, data: { nome } }); }
+    catch { throw new AppError('Não encontrado', 404); }
+  },
+  async remove(id: number) {
+    try { await prismaAny.congregacao.delete({ where: { id } }); } catch { throw new AppError('Não encontrado', 404); }
+  }
 };

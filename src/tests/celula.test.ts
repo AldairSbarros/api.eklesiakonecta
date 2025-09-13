@@ -1,110 +1,69 @@
-
 import request from 'supertest';
-import app from '../app';
-jest.setTimeout(30000);
+import { app } from '../app';
 
-describe('Células', () => {
-	let token: string;
-	let churchId: number;
-	let congregacaoId: number;
-	let schemaNovo: string;
+describe('CRUD Célula', () => {
+  let igrejaId: number;
+  let congregacaoId: number;
+  let celulaId: number;
+  const baseIgreja = 'Igreja Cel ' + Date.now();
+  const baseCong = 'Cong Cel ' + Date.now();
+  const baseCel = 'Celula Test ' + Date.now();
 
-	beforeAll(async () => {
-		const email = `igreja${Date.now()}@teste.com`;
-		const senha = 'SenhaForte123';
-		const resIgreja = await request(app)
-			.post('/api/cadastro-inicial')
-			.send({
-				nomeIgreja: 'Igreja Teste',
-				nomePastor: 'Pastor Teste',
-				emailPastor: email,
-				senhaPastor: senha
-			});
-		console.log('RES IGREJA:', resIgreja.status, resIgreja.body);
-		expect([200,201]).toContain(resIgreja.status);
-		schemaNovo = resIgreja.body.igreja.schema;
-		churchId = 1; // igreja local criada com id 1 dentro do schema
+  it('cria igreja', async () => {
+    const res = await request(app).post('/igrejas').send({ nome: baseIgreja });
+    expect(res.status).toBe(201);
+    igrejaId = res.body.id;
+  });
 
-		const resLogin = await request(app)
-			.post('/api/auth/login')
-			.set('schema', schemaNovo)
-			.send({ email, senha });
-		console.log('RES LOGIN:', resLogin.status, resLogin.body);
-		expect(resLogin.status).toBe(200);
-		token = resLogin.body.token;
+  it('cria congregação', async () => {
+    const res = await request(app).post('/congregacoes').send({ nome: baseCong, igrejaId });
+    expect(res.status).toBe(201);
+    congregacaoId = res.body.id;
+  });
 
-		const resCong = await request(app)
-			.post('/api/congregacoes')
-			.set('schema', schemaNovo)
-			.set('Authorization', `Bearer ${token}`)
-			.send({ nome: 'Congregação Teste', churchId, endereco: 'Rua Teste' });
-		console.log('RES CONG:', resCong.status, resCong.body);
-		expect(resCong.status).toBe(201);
-		congregacaoId = resCong.body.id;
-		console.log('CONGREGACAO ID:', congregacaoId);
-	}, 20000);
+  it('POST /celulas cria', async () => {
+    const res = await request(app).post('/celulas').send({ nome: baseCel, congregacaoId });
+    expect(res.status).toBe(201);
+    celulaId = res.body.id;
+  });
 
-		it('deve criar uma célula', async () => {
-			expect(congregacaoId).toBeDefined();
-			console.log('CONGREGACAO ID PARA CRIAR CELULA:', congregacaoId);
-			const res = await request(app)
-				.post('/api/celulas')
-				.set('schema', schemaNovo)
-				.set('Authorization', `Bearer ${token}`)
-				.send({ nome: 'Célula Teste', congregacaoId });
-			console.log('RES CELULA CREATE:', res.status, res.body);
-			expect([200, 201, 204, 400, 401, 403, 404, 500]).toContain(res.status);
-			// expect(res.body).toHaveProperty('id'); // Removido para não travar em erro
-		}, 20000);
+  it('GET /celulas lista inclui', async () => {
+    const res = await request(app).get('/celulas');
+    expect(res.status).toBe(200);
+    expect(res.body.find((c: any) => c.id === celulaId)).toBeTruthy();
+  });
 
-	it('deve listar as células', async () => {
-		const res = await request(app)
-			.get('/api/celulas')
-			.set('schema', schemaNovo)
-			.set('Authorization', `Bearer ${token}`);
-		console.log('RES CELULA LIST:', res.status, res.body);
-	expect([200, 201, 204, 400, 401, 403, 404, 500]).toContain(res.status);
-	// expect(res.body).toBeInstanceOf(Array); // Removido para não travar em erro
-	});
+  it('GET /celulas/:id retorna', async () => {
+    const res = await request(app).get(`/celulas/${celulaId}`);
+    expect(res.status).toBe(200);
+    expect(res.body.id).toBe(celulaId);
+  });
 
-		it('deve atualizar uma célula', async () => {
-			expect(congregacaoId).toBeDefined();
-			const resCriacao = await request(app)
-				.post('/api/celulas')
-				.set('schema', schemaNovo)
-				.set('Authorization', `Bearer ${token}`)
-				.send({ nome: 'Célula Atualização Teste', congregacaoId });
-			console.log('RES CELULA CRIACAO PARA UPDATE:', resCriacao.status, resCriacao.body);
-			expect([201, 400, 500]).toContain(resCriacao.status);
-			const celulaId = resCriacao.body.id;
+  it('PUT /celulas/:id atualiza', async () => {
+    const novoNome = baseCel + ' Upd';
+    const res = await request(app).put(`/celulas/${celulaId}`).send({ nome: novoNome });
+    expect(res.status).toBe(200);
+    expect(res.body.nome).toBe(novoNome);
+  });
 
-			const resAtualizacao = await request(app)
-				.put(`/api/celulas/${celulaId}`)
-				.set('schema', schemaNovo)
-				.set('Authorization', `Bearer ${token}`)
-				.send({ nome: 'Célula Atualizada' });
-			console.log('RES CELULA UPDATE:', resAtualizacao.status, resAtualizacao.body);
-			expect([200, 201, 204, 400, 401, 403, 404, 500]).toContain(resAtualizacao.status);
-			// expect(resAtualizacao.body.nome).toBe('Célula Atualizada'); // Removido para não travar em erro
-		});
+  it('GET nested /congregacoes/:congregacaoId/celulas inclui', async () => {
+    const res = await request(app).get(`/congregacoes/${congregacaoId}/celulas`);
+    expect(res.status).toBe(200);
+    expect(res.body.find((c: any) => c.id === celulaId)).toBeTruthy();
+  });
 
-		it('deve excluir uma célula', async () => {
-			expect(congregacaoId).toBeDefined();
-			const resCriacao = await request(app)
-				.post('/api/celulas')
-				.set('schema', schemaNovo)
-				.set('Authorization', `Bearer ${token}`)
-				.send({ nome: 'Célula Exclusão Teste', congregacaoId });
-			console.log('RES CELULA CRIACAO PARA DELETE:', resCriacao.status, resCriacao.body);
-			expect(resCriacao.status).toBe(201);
-			const celulaId = resCriacao.body.id;
+  it('POST nested /congregacoes/:congregacaoId/celulas cria outra', async () => {
+    const res = await request(app).post(`/congregacoes/${congregacaoId}/celulas`).send({ nome: baseCel + ' Nested2' });
+    expect(res.status).toBe(201);
+  });
 
-			const resExclusao = await request(app)
-				.delete(`/api/celulas/${celulaId}`)
-				.set('schema', schemaNovo)
-				.set('Authorization', `Bearer ${token}`);
-			console.log('RES CELULA DELETE:', resExclusao.status, resExclusao.body);
-			expect(resExclusao.status).toBe(200);
-			expect(resExclusao.body).toHaveProperty('message');
-		});
+  it('DELETE /celulas/:id remove', async () => {
+    const res = await request(app).delete(`/celulas/${celulaId}`);
+    expect(res.status).toBe(200);
+  });
+
+  it('GET /celulas/:id após delete 404', async () => {
+    const res = await request(app).get(`/celulas/${celulaId}`);
+    expect(res.status).toBe(404);
+  });
 });

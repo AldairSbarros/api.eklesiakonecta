@@ -1,0 +1,41 @@
+version: '3.9'
+
+networks:
+  eklesia_new_net: {}
+
+volumes:
+  pgdata_dev: {}
+
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: senha
+      POSTGRES_DB: eklesia
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER}" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    volumes:
+      - pgdata_dev:/var/lib/postgresql/data
+    networks:
+      - eklesia_new_net
+
+  app:
+    build: .
+    environment:
+      DATABASE_URL: postgresql://postgres:senha@db:5432/eklesia?schema=public
+      NODE_ENV: development
+    command: npm run dev
+    ports:
+      - "3100:3000"
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - ./src:/app/src
+      - ./prisma:/app/prisma
+    networks:
+      - eklesia_new_net
