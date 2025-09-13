@@ -17,7 +17,7 @@ jobs:
       DATABASE_URL: postgresql://postgres:password@postgres:5432/eklesia?schema=public
     services:
       postgres:
-        image: postgres:16
+        image: postgres:15
         env:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: password
@@ -25,10 +25,7 @@ jobs:
         ports:
           - 5432:5432
         options: >-
-          --health-cmd="pg_isready -U postgres" \
-          --health-interval=5s \
-          --health-timeout=5s \
-          --health-retries=10
+          --health-cmd="pg_isready -U postgres" --health-interval=5s --health-timeout=5s --health-retries=10
         # Healthcheck removido para evitar falhas intermitentes de inicialização; rely no retry implícito da aplicação.
     steps:
       - uses: actions/checkout@v4
