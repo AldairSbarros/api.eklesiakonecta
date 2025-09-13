@@ -6,7 +6,8 @@ services:
   api:
     image: ghcr.io/aldairsbarros/api.eklesiakonecta:latest
     container_name: eklesia-api
-    env_file: .env
+    env_file:
+      - ../.env
     restart: unless-stopped
     depends_on:
       postgres:
