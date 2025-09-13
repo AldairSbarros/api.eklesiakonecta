@@ -14,7 +14,8 @@ jobs:
   test:
     runs-on: ubuntu-latest
     env:
-      DATABASE_URL: postgresql://postgres:password@postgres:5432/eklesia?schema=public
+      # Usar localhost (porta mapeada) para alinhar com testes de disponibilidade e evitar DNS interno ocasionalmente indisponível
+      DATABASE_URL: postgresql://postgres:password@localhost:5432/eklesia?schema=public
     services:
       postgres:
         image: postgres:15
@@ -54,18 +55,29 @@ jobs:
         env:
           PGPASSWORD: password
         run: |
-          echo "Aguardando Postgres via healthcheck (até ~60s)..."
-          for i in {1..30}; do
-            STATUS=$(docker inspect --format='{{json .State.Health.Status}}' $(docker ps --filter 'name=postgres' --format '{{.ID}}') 2>/dev/null || echo 'null')
-            if [ "$STATUS" = '"healthy"' ]; then echo "Healthcheck OK (tentativa $i)."; READY=1; break; fi
-            if psql "postgresql://postgres:password@localhost:5432/postgres" -c 'select 1' >/dev/null 2>&1; then echo "Query OK fallback (tentativa $i)."; READY=1; break; fi
+          echo "Aguardando Postgres via healthcheck + conexão (até ~90s)..."
+          for i in {1..45}; do
+            CID=$(docker ps --filter 'name=postgres' --format '{{.ID}}')
+            STATUS=$(docker inspect --format='{{json .State.Health.Status}}' "$CID" 2>/dev/null || echo 'null')
+            # Primeiro tenta health, depois conexão ao DB alvo 'eklesia'
+            if [ "$STATUS" = '"healthy"' ]; then
+              if psql "postgresql://postgres:password@localhost:5432/eklesia" -c 'select 1' >/dev/null 2>&1; then
+                echo "Healthcheck + query OK (tentativa $i)."; READY=1; break;
+              fi
+            fi
+            # fallback tenta query mesmo sem healthy (às vezes health ainda não atualizou)
+            if psql "postgresql://postgres:password@localhost:5432/eklesia" -c 'select 1' >/dev/null 2>&1; then
+              echo "Query OK (sem health=healthy ainda) tentativa $i."; READY=1; break;
+            fi
             echo "[$i] health=$STATUS aguardando..."; sleep 2;
           done
           if [ -z "${READY:-}" ]; then
-            echo "Postgres não saudável a tempo. Logs:";
+            echo "Postgres não saudável a tempo. Logs (últimas 100 linhas):";
             docker ps -a;
-            docker logs $(docker ps -a --filter 'name=postgres' --format '{{.ID}}') || true;
-            exit 1;
+            docker logs --tail 100 $(docker ps -a --filter 'name=postgres' --format '{{.ID}}') || true;
+            echo "Tentando uma última conexão direta antes de falhar...";
+            set -x; psql "postgresql://postgres:password@localhost:5432/eklesia" -c 'select 1'; RC=$?; set +x;
+            exit ${RC:-1};
           fi
       - name: Run migrations
         run: npx prisma migrate deploy
