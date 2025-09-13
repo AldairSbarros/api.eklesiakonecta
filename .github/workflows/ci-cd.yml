@@ -22,7 +22,7 @@ jobs:
         # Não é necessário mapear porta para acessar do job; usar host 'postgres' direto.
         # Healthcheck reescrito sem barras invertidas para evitar parsing incorreto.
         options: |
-          --health-cmd=pg_isready -U postgres
+          --health-cmd="pg_isready -U postgres"
           --health-interval=5s
           --health-timeout=5s
           --health-retries=10
