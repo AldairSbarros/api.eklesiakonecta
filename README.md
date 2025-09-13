@@ -262,6 +262,19 @@ Após o bootstrap:
 
 
 ### Variáveis importantes em produção
+### Publicando com Nginx + HTTPS
+
+Guia completo em: `infra/nginx/README-nginx.md`
+
+Resumo rápido:
+```bash
+cd infra/nginx
+sudo bash setup-nginx.sh --domain api.seu-dominio.com --email seu@email.com
+```
+Depois acessar: `https://api.seu-dominio.com/api/health/multi-tenancy`
+
+Proteção de métricas (opcional) veja seção 5 do guia.
+
 | Variável | Descrição |
 |----------|-----------|
 | DATABASE_URL | Conexão PostgreSQL (sem schema fixo) |
