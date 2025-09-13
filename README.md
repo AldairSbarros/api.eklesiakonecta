@@ -242,6 +242,25 @@ Sequência sugerida para reativação:
 
 Esse modo facilita rodar em VPS modesta (1 vCPU / 8GB RAM) sem atritos iniciais.
 
+### Bootstrap Automático (Instalação em VPS do zero)
+
+Se quiser automatizar tudo (instalar Docker se faltar, clonar repositório, gerar `.env` e subir a stack mínima) você pode rodar:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/AldairSbarros/api.eklesiakonecta/main/infra/deploy/bootstrap.sh -o bootstrap.sh
+chmod +x bootstrap.sh
+sudo ./bootstrap.sh
+```
+
+Ou copiar o script manualmente do repositório em `infra/deploy/bootstrap.sh`.
+
+Após o bootstrap:
+1. Testar: `curl http://SEU_IP:3001/api/health/multi-tenancy`
+2. Fazer cadastro inicial: `POST /api/cadastro-inicial`
+3. Fazer login: `POST /api/auth/login`
+4. Retirar gradualmente as flags `DISABLE_*` do `.env`.
+
+
 ### Variáveis importantes em produção
 | Variável | Descrição |
 |----------|-----------|
