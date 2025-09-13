@@ -67,9 +67,101 @@ const swaggerSpec = {
         parameters: [ { name: 'id', in: 'path', required: true, schema: { type: 'integer' } } ],
         responses: { '204': { description: 'Removido' }, '404': { description: 'Não encontrada' } }
       }
+    },
+    // ===== Congregações =====
+    '/congregacoes': {
+      get: {
+        tags: ['Congregações'], summary: 'Listar congregações',
+        responses: { '200': { description: 'OK', content: { 'application/json': { schema: { type:'array', items: { $ref:'#/components/schemas/Congregacao' } } } } } }
+      },
+      post: {
+        tags: ['Congregações'], summary: 'Criar congregação',
+        requestBody: { required: true, content: { 'application/json': { schema: { $ref:'#/components/schemas/CongregacaoCreateInput' } } } },
+        responses: { '201': { description: 'Criado', content: { 'application/json': { schema: { $ref:'#/components/schemas/Congregacao' } } } } }
+      }
+    },
+    '/congregacoes/{id}': {
+      get: { tags:['Congregações'], summary:'Obter congregação', parameters:[{name:'id',in:'path',required:true,schema:{type:'integer'}}], responses:{'200':{description:'OK',content:{'application/json':{schema:{$ref:'#/components/schemas/Congregacao'}}},},'404':{description:'Não encontrada'}} },
+      put: { tags:['Congregações'], summary:'Atualizar congregação', parameters:[{name:'id',in:'path',required:true,schema:{type:'integer'}}], requestBody:{required:true,content:{'application/json':{schema:{$ref:'#/components/schemas/CongregacaoUpdateInput'}}}}, responses:{'200':{description:'Atualizado'},'404':{description:'Não encontrada'}} },
+      delete: { tags:['Congregações'], summary:'Remover congregação', parameters:[{name:'id',in:'path',required:true,schema:{type:'integer'}}], responses:{'204':{description:'Removido'},'404':{description:'Não encontrada'}} }
+    },
+    '/igrejas/{igrejaId}/congregacoes': {
+      get: { tags:['Congregações'], summary:'Listar congregações de uma igreja', parameters:[{name:'igrejaId',in:'path',required:true,schema:{type:'integer'}}], responses:{'200':{description:'OK',content:{'application/json':{schema:{type:'array', items: { $ref:'#/components/schemas/Congregacao' }}}}}} }
+    },
+    // ===== Gerações =====
+    '/geracoes': {
+      get: { tags:['Gerações'], summary:'Listar gerações', responses:{'200':{description:'OK',content:{'application/json':{schema:{type:'array',items:{$ref:'#/components/schemas/Geracao'}}}}}} }
+    },
+    '/geracoes/{id}': {
+      get: { tags:['Gerações'], summary:'Obter geração', parameters:[{name:'id',in:'path',required:true,schema:{type:'integer'}}], responses:{'200':{description:'OK',content:{'application/json':{schema:{$ref:'#/components/schemas/Geracao'}}}},'404':{description:'Não encontrada'}} },
+      put: { tags:['Gerações'], summary:'Atualizar geração', parameters:[{name:'id',in:'path',required:true,schema:{type:'integer'}}], requestBody:{required:true,content:{'application/json':{schema:{$ref:'#/components/schemas/GeracaoUpdateInput'}}}}, responses:{'200':{description:'Atualizado'},'404':{description:'Não encontrada'}} },
+      delete: { tags:['Gerações'], summary:'Remover geração', parameters:[{name:'id',in:'path',required:true,schema:{type:'integer'}}], responses:{'204':{description:'Removido'},'404':{description:'Não encontrada'}} }
+    },
+    '/congregacoes/{congregacaoId}/geracoes': {
+      get: { tags:['Gerações'], summary:'Listar gerações de uma congregação', parameters:[{name:'congregacaoId',in:'path',required:true,schema:{type:'integer'}}], responses:{'200':{description:'OK',content:{'application/json':{schema:{type:'array',items:{$ref:'#/components/schemas/Geracao'}}}}}} },
+      post: { tags:['Gerações'], summary:'Criar geração em congregação', parameters:[{name:'congregacaoId',in:'path',required:true,schema:{type:'integer'}}], requestBody:{required:true,content:{'application/json':{schema:{$ref:'#/components/schemas/GeracaoCreateInput'}}}}, responses:{'201':{description:'Criado',content:{'application/json':{schema:{$ref:'#/components/schemas/Geracao'}}}}} }
+    },
+    // ===== Células =====
+    '/celulas': {
+      get: { tags:['Células'], summary:'Listar células', responses:{'200':{description:'OK',content:{'application/json':{schema:{type:'array',items:{$ref:'#/components/schemas/Celula'}}}}}} },
+      post: { tags:['Células'], summary:'Criar célula', requestBody:{required:true,content:{'application/json':{schema:{$ref:'#/components/schemas/CelulaCreateInput'}}}}, responses:{'201':{description:'Criado',content:{'application/json':{schema:{$ref:'#/components/schemas/Celula'}}}}} }
+    },
+    '/celulas/{id}': {
+      get: { tags:['Células'], summary:'Obter célula', parameters:[{name:'id',in:'path',required:true,schema:{type:'integer'}}], responses:{'200':{description:'OK',content:{'application/json':{schema:{$ref:'#/components/schemas/Celula'}}}},'404':{description:'Não encontrada'}} },
+      put: { tags:['Células'], summary:'Atualizar célula', parameters:[{name:'id',in:'path',required:true,schema:{type:'integer'}}], requestBody:{required:true,content:{'application/json':{schema:{$ref:'#/components/schemas/CelulaUpdateInput'}}}}, responses:{'200':{description:'Atualizado'},'404':{description:'Não encontrada'}} },
+      delete: { tags:['Células'], summary:'Remover célula', parameters:[{name:'id',in:'path',required:true,schema:{type:'integer'}}], responses:{'204':{description:'Removido'},'404':{description:'Não encontrada'}} }
+    },
+    '/congregacoes/{congregacaoId}/celulas': {
+      get: { tags:['Células'], summary:'Listar células de uma congregação', parameters:[{name:'congregacaoId',in:'path',required:true,schema:{type:'integer'}}], responses:{'200':{description:'OK',content:{'application/json':{schema:{type:'array',items:{$ref:'#/components/schemas/Celula'}}}}}} },
+      post: { tags:['Células'], summary:'Criar célula em congregação', parameters:[{name:'congregacaoId',in:'path',required:true,schema:{type:'integer'}}], requestBody:{required:true,content:{'application/json':{schema:{$ref:'#/components/schemas/CelulaCreateInput'}}}}, responses:{'201':{description:'Criado',content:{'application/json':{schema:{$ref:'#/components/schemas/Celula'}}}}} }
+    },
+    // ===== Membros =====
+    '/membros': {
+      get: { tags:['Membros'], summary:'Listar membros', responses:{'200':{description:'OK',content:{'application/json':{schema:{type:'array',items:{$ref:'#/components/schemas/Membro'}}}}}} },
+      post: { tags:['Membros'], summary:'Criar membro', requestBody:{required:true,content:{'application/json':{schema:{$ref:'#/components/schemas/MembroCreateInput'}}}}, responses:{'201':{description:'Criado',content:{'application/json':{schema:{$ref:'#/components/schemas/Membro'}}}}} }
+    },
+    '/membros/{id}': {
+      get: { tags:['Membros'], summary:'Obter membro', parameters:[{name:'id',in:'path',required:true,schema:{type:'integer'}}], responses:{'200':{description:'OK',content:{'application/json':{schema:{$ref:'#/components/schemas/Membro'}}}},'404':{description:'Não encontrado'}} },
+      put: { tags:['Membros'], summary:'Atualizar membro', parameters:[{name:'id',in:'path',required:true,schema:{type:'integer'}}], requestBody:{required:true,content:{'application/json':{schema:{$ref:'#/components/schemas/MembroUpdateInput'}}}}, responses:{'200':{description:'Atualizado'},'404':{description:'Não encontrado'}} },
+      delete: { tags:['Membros'], summary:'Remover membro', parameters:[{name:'id',in:'path',required:true,schema:{type:'integer'}}], responses:{'204':{description:'Removido'},'404':{description:'Não encontrado'}} }
+    },
+    '/celulas/{celulaId}/membros': {
+      get: { tags:['Membros'], summary:'Listar membros de uma célula', parameters:[{name:'celulaId',in:'path',required:true,schema:{type:'integer'}}], responses:{'200':{description:'OK',content:{'application/json':{schema:{type:'array',items:{$ref:'#/components/schemas/Membro'}}}}}} },
+      post: { tags:['Membros'], summary:'Criar membro em célula', parameters:[{name:'celulaId',in:'path',required:true,schema:{type:'integer'}}], requestBody:{required:true,content:{'application/json':{schema:{type:'object',properties:{nome:{type:'string'}},required:['nome']}}}}, responses:{'201':{description:'Criado',content:{'application/json':{schema:{$ref:'#/components/schemas/Membro'}}}}} }
+    },
+    // ===== Membro Etapas =====
+    '/membros/{membroId}/etapas': {
+      get: { tags:['Membros'], summary:'Listar etapas do membro', parameters:[{name:'membroId',in:'path',required:true,schema:{type:'integer'}}], responses:{'200':{description:'OK',content:{'application/json':{schema:{type:'array',items:{$ref:'#/components/schemas/MembroEtapa'}}}}}} },
+      post: { tags:['Membros'], summary:'Adicionar etapa ao membro', parameters:[{name:'membroId',in:'path',required:true,schema:{type:'integer'}}], requestBody:{required:true,content:{'application/json':{schema:{$ref:'#/components/schemas/MembroEtapaCreateInput'}}}}, responses:{'201':{description:'Criado',content:{'application/json':{schema:{$ref:'#/components/schemas/MembroEtapa'}}}}} }
+    },
+    // ===== Receitas =====
+    '/congregacoes/{congregacaoId}/receitas': {
+      get: { tags:['Receitas'], summary:'Listar receitas (por mês opcional)', parameters:[{name:'congregacaoId',in:'path',required:true,schema:{type:'integer'}},{name:'mes',in:'query',required:false,schema:{type:'string',pattern:'^[0-9]{4}-[0-9]{2}$'}}], responses:{'200':{description:'OK',content:{'application/json':{schema:{type:'array',items:{$ref:'#/components/schemas/Receita'}}}}}} },
+      post: { tags:['Receitas'], summary:'Lançar receita', parameters:[{name:'congregacaoId',in:'path',required:true,schema:{type:'integer'}}], requestBody:{required:true,content:{'application/json':{schema:{$ref:'#/components/schemas/ReceitaCreateInput'}}}}, responses:{'201':{description:'Criado',content:{'application/json':{schema:{$ref:'#/components/schemas/Receita'}}}}} }
+    },
+    '/congregacoes/{congregacaoId}/relatorios/financeiro': {
+      get: { tags:['Receitas'], summary:'Relatório financeiro mensal', parameters:[{name:'congregacaoId',in:'path',required:true,schema:{type:'integer'}},{name:'mes',in:'query',required:true,schema:{type:'string',pattern:'^[0-9]{4}-[0-9]{2}$'}},{name:'formato',in:'query',required:false,schema:{type:'string',enum:['json','csv','pdf','xlsx','docx']}}], responses:{'200':{description:'OK'}} }
+    },
+    // ===== Usuários =====
+    '/usuarios': {
+      get: { tags:['Usuários'], summary:'Listar usuários', responses:{'200':{description:'OK',content:{'application/json':{schema:{type:'array',items:{$ref:'#/components/schemas/Usuario'}}}}}} },
+      post: { tags:['Usuários'], summary:'Criar usuário', requestBody:{required:true,content:{'application/json':{schema:{$ref:'#/components/schemas/UsuarioCreateInput'}}}}, responses:{'201':{description:'Criado',content:{'application/json':{schema:{$ref:'#/components/schemas/Usuario'}}}}} }
+    },
+    '/usuarios/{id}': {
+      get: { tags:['Usuários'], summary:'Obter usuário', parameters:[{name:'id',in:'path',required:true,schema:{type:'integer'}}], responses:{'200':{description:'OK',content:{'application/json':{schema:{$ref:'#/components/schemas/Usuario'}}}},'404':{description:'Não encontrado'}} },
+      put: { tags:['Usuários'], summary:'Atualizar usuário', parameters:[{name:'id',in:'path',required:true,schema:{type:'integer'}}], requestBody:{required:true,content:{'application/json':{schema:{$ref:'#/components/schemas/UsuarioUpdateInput'}}}}, responses:{'200':{description:'Atualizado'},'404':{description:'Não encontrado'}} },
+      delete: { tags:['Usuários'], summary:'Remover usuário', parameters:[{name:'id',in:'path',required:true,schema:{type:'integer'}}], responses:{'204':{description:'Removido'},'404':{description:'Não encontrado'}} }
     }
   },
   components: {
+    securitySchemes: {
+      bearerAuth: {
+        type: 'http',
+        scheme: 'bearer',
+        bearerFormat: 'JWT',
+        description: 'Autenticação futura via JWT (placeholder)'
+      }
+    },
     schemas: {
       // ===== Enums =====
       Role: { type: 'string', enum: ['PASTOR','DIRIGENTE','TESOUREIRO','SECRETARIO'] },
