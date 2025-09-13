@@ -9,6 +9,8 @@ import celulaRoutes from './routes/celula.routes';
 import membroRoutes from './routes/membro.routes';
 import receitaRoutes from './routes/receita.routes';
 import { AppError } from './utils/AppError';
+import swaggerUi from 'swagger-ui-express';
+import swaggerSpec from './docs/swaggerConfig';
 
 const app = express();
 app.use(express.json());
@@ -28,6 +30,15 @@ app.get('/health', async (_req, res) => {
 
 // Root
 app.get('/', (_req, res) => res.json({ name: 'API Eklesia Konecta - Single Tenant', status: 'ok' }));
+
+// OpenAPI JSON
+app.get('/openapi.json', (_req, res) => {
+  res.setHeader('Content-Type', 'application/json');
+  res.send(swaggerSpec);
+});
+
+// Swagger UI
+app.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 // Montagem de rotas de domínio
 app.use(usuarioRoutes);
