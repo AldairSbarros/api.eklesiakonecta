@@ -8,6 +8,17 @@ services:
     container_name: eklesia-api
     env_file:
       - ../../.env
+    # Overrides críticos para produção (corrigem loop de restart)
+    # Motivo: container estava apontando PGHOST/DATABASE_URL para localhost e não alcançava o serviço postgres
+    environment:
+      PGHOST: postgres
+      # DB principal (confira se o nome correto é eklesia_db). A senha contém '@' que precisa estar URL encoded (%40)
+      DATABASE_URL: postgresql://aldai:Riadl%401974@postgres:5432/eklesia_db?schema=public
+      PGUSER: aldai
+      PGPASSWORD: "Riadl@1974"
+      PGDATABASE: eklesia_db
+      # Desativar migrations temporariamente até estabilizar (evita loop caso falhe)
+      RUN_MIGRATIONS: "false"
     restart: unless-stopped
     depends_on:
       postgres:
@@ -27,7 +38,8 @@ services:
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-senha}
-      POSTGRES_DB: ${POSTGRES_DB:-eklesia}
+      # Ajuste opcional: alinhar nome do DB se você realmente usa eklesia_db. Se já existe volume inicializado com outro nome, este valor não recria/renomeia.
+      POSTGRES_DB: ${POSTGRES_DB:-eklesia_db}
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
