@@ -22,6 +22,13 @@ jobs:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: password
           POSTGRES_DB: eklesia
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U postgres" \
+          --health-interval=5s \
+          --health-timeout=5s \
+          --health-retries=10
         # Healthcheck removido para evitar falhas intermitentes de inicialização; rely no retry implícito da aplicação.
     steps:
       - uses: actions/checkout@v4
@@ -45,22 +52,22 @@ jobs:
         run: npx prisma generate
       - name: Install PostgreSQL client
         run: sudo apt-get update && sudo apt-get install -y postgresql-client
-      - name: Wait for Postgres (robusto)
+      - name: Wait for Postgres (robusto + health)
         shell: bash
         env:
           PGPASSWORD: password
         run: |
-          echo "Aguardando Postgres (até 120s)..."
-          for i in {1..60}; do
-            if psql "postgresql://postgres:password@postgres:5432/postgres" -c 'select 1' >/dev/null 2>&1; then
-              echo "Postgres respondeu (tentativa $i)."; READY=1; break; fi
-            echo "[${i}] ainda não disponível..."; sleep 2;
+          echo "Aguardando Postgres via healthcheck (até ~60s)..."
+          for i in {1..30}; do
+            STATUS=$(docker inspect --format='{{json .State.Health.Status}}' $(docker ps --filter 'name=postgres' --format '{{.ID}}') 2>/dev/null || echo 'null')
+            if [ "$STATUS" = '"healthy"' ]; then echo "Healthcheck OK (tentativa $i)."; READY=1; break; fi
+            if psql "postgresql://postgres:password@localhost:5432/postgres" -c 'select 1' >/dev/null 2>&1; then echo "Query OK fallback (tentativa $i)."; READY=1; break; fi
+            echo "[$i] health=$STATUS aguardando..."; sleep 2;
           done
           if [ -z "${READY:-}" ]; then
-            echo "Postgres não respondeu a tempo. Capturando logs do serviço...";
-            echo "--- docker ps ---"; docker ps -a;
-            echo "--- logs container postgres ---"; docker logs $(docker ps -a --filter "name=postgres" --format '{{.ID}}') || true;
-            echo "--- fim logs ---";
+            echo "Postgres não saudável a tempo. Logs:";
+            docker ps -a;
+            docker logs $(docker ps -a --filter 'name=postgres' --format '{{.ID}}') || true;
             exit 1;
           fi
       - name: Run migrations
