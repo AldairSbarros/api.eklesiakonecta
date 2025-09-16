@@ -35,6 +35,10 @@ ENV NODE_ENV=production \
 
 WORKDIR /app
 
+# Instala OpenSSL no runtime para evitar warning do Prisma e garantir compatibilidade
+RUN apt-get update -y && apt-get install -y --no-install-recommends openssl ca-certificates curl \
+  && rm -rf /var/lib/apt/lists/*
+
 COPY package.json package-lock.json* ./
 RUN npm ci --omit=dev --legacy-peer-deps && npm cache clean --force >/dev/null 2>&1 || true
 
