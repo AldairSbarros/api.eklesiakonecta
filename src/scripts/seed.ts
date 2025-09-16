@@ -40,8 +40,8 @@ async function main() {
 
   await prismaPublic.usuario.upsert({
     where: { email: globalSuperEmail },
-    update: {},
-    create: { nome: 'Super Usuário Global', email: globalSuperEmail, senhaHash: globalSuperHash }
+    update: { role: 'SUPERUSER' },
+    create: { nome: 'Super Usuário Global', email: globalSuperEmail, senhaHash: globalSuperHash, role: 'SUPERUSER' }
   });
   console.log('[seed] SUPERUSER global ok');
 
@@ -71,14 +71,14 @@ async function main() {
 
   await prismaTenant.usuario.upsert({
     where: { email: adminEmail },
-    update: {},
-    create: { nome: 'Admin Seed', email: adminEmail, senhaHash: adminHash }
+    update: { role: 'PASTOR' },
+    create: { nome: 'Admin Seed', email: adminEmail, senhaHash: adminHash, role: 'PASTOR' }
   });
 
   await prismaTenant.usuario.upsert({
     where: { email: superEmail },
-    update: {},
-    create: { nome: 'Superuser Seed', email: superEmail, senhaHash: superHash }
+    update: { role: 'SUPERUSER' },
+    create: { nome: 'Superuser Seed', email: superEmail, senhaHash: superHash, role: 'SUPERUSER' }
   });
   console.log('[seed] Usuários ADMIN e SUPERUSER criados/ok');
 
