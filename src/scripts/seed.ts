@@ -3,6 +3,12 @@ import bcrypt from 'bcrypt';
 import { exec } from 'child_process';
 import path from 'path';
 
+/*
+  Seed multi-schema (apenas um schema de igreja por enquanto)
+  Execução em produção: node dist/scripts/seed.js
+  Execução em dev: npm run seed:dev (usa ts-node-dev ou ts-node)
+*/
+
 const prismaPublic = new PrismaClient();
 
 function buildDbUrlForSchema(schema: string) {
@@ -25,70 +31,67 @@ async function ensureSchema(schema: string) {
 }
 
 async function main() {
-  // ============ SUPERUSER GLOBAL (DevUser) ============
-  const globalSuperEmail = process.env.SEED_GLOBAL_SUPER_EMAIL || 'aldairbarros@eklesia.app.br';
+  console.log('[seed] Iniciando seed...');
+
+  // SUPERUSER GLOBAL
+  const globalSuperEmail = process.env.SEED_GLOBAL_SUPER_EMAIL || 'super@eklesia.app.br';
   const globalSuperPassPlain = process.env.SEED_GLOBAL_SUPER_PASS || 'SuperGlobal123!';
   const globalSuperHash = await bcrypt.hash(globalSuperPassPlain, 10);
 
-  await prismaPublic.usuario.upsert({ where: { email: globalSuperEmail }, update: {}, create: { nome: 'Super Usuário Global', email: globalSuperEmail, senhaHash: globalSuperHash } });
-  console.log('[seed] DevUser SUPERUSER global ok');
+  await prismaPublic.usuario.upsert({
+    where: { email: globalSuperEmail },
+    update: {},
+    create: { nome: 'Super Usuário Global', email: globalSuperEmail, senhaHash: globalSuperHash }
+  });
+  console.log('[seed] SUPERUSER global ok');
 
-  // ============ IGREJA PADRÃO + ADMIN & SUPERUSER TENANT ============
+  // IGREJA PADRÃO
   const defaultChurchName = process.env.SEED_CHURCH_NAME || 'Igreja Seed';
-  // Removido email/senha da igreja: modelo Igreja tem apenas nome
   const defaultSchema = process.env.SEED_CHURCH_SCHEMA || 'igreja_seed';
   const adminEmail = process.env.SEED_ADMIN_EMAIL || 'admin@igreja.seed';
   const superEmail = process.env.SEED_SUPERUSER_EMAIL || 'superuser@igreja.seed';
   const adminPassPlain = process.env.SEED_ADMIN_PASS || 'AdminSeed123!';
   const superPassPlain = process.env.SEED_SUPERUSER_PASS || 'SuperSeed123!';
 
-  // Church no schema público
   let church = await prismaPublic.igreja.findFirst({ where: { nome: defaultChurchName } });
   if (!church) {
-    church = await prismaPublic.igreja.create({
-      data: {
-        nome: defaultChurchName,
-      }
-    });
-    console.log('[seed] Church padrão criada');
+    church = await prismaPublic.igreja.create({ data: { nome: defaultChurchName } });
+    console.log('[seed] Igreja padrão criada');
   } else {
-    console.log('[seed] Church padrão já existente');
+    console.log('[seed] Igreja padrão já existente');
   }
 
-  // Provisiona schema da church
   await ensureSchema(defaultSchema);
+  console.log('[seed] Schema do tenant garantido:', defaultSchema);
 
-  // Prisma apontando para schema da church
   const prismaTenant = new PrismaClient({ datasources: { db: { url: buildDbUrlForSchema(defaultSchema) } } });
+
   const adminHash = await bcrypt.hash(adminPassPlain, 10);
   const superHash = await bcrypt.hash(superPassPlain, 10);
 
-  // Admin
   await prismaTenant.usuario.upsert({
     where: { email: adminEmail },
     update: {},
-  create: { nome: 'Admin Seed', email: adminEmail, senhaHash: adminHash }
+    create: { nome: 'Admin Seed', email: adminEmail, senhaHash: adminHash }
   });
-  // Superuser dentro do tenant
+
   await prismaTenant.usuario.upsert({
     where: { email: superEmail },
     update: {},
-  create: { nome: 'Superuser Seed', email: superEmail, senhaHash: superHash }
+    create: { nome: 'Superuser Seed', email: superEmail, senhaHash: superHash }
   });
-  console.log('[seed] Usuários ADMIN e SUPERUSER no tenant padrão ok');
+  console.log('[seed] Usuários ADMIN e SUPERUSER criados/ok');
 
   await prismaTenant.$disconnect();
 
-  console.log('[seed] Concluído. Credenciais:');
-  console.log('  DevUser SUPERUSER:', globalSuperEmail, globalSuperPassPlain);
-  console.log('  Church:', defaultChurchName, '(somente nome cadastrado)', 'schema=', defaultSchema);
-  console.log('  Admin Tenant:', adminEmail, adminPassPlain);
-  console.log('  Superuser Tenant:', superEmail, superPassPlain);
+  console.log('\n[seed] Concluído. Credenciais:');
+  console.log('  Global SUPERUSER:', globalSuperEmail, globalSuperPassPlain);
+  console.log('  Igreja padrão:', defaultChurchName, 'schema=', defaultSchema);
+  console.log('  Admin tenant:', adminEmail, adminPassPlain);
+  console.log('  Superuser tenant:', superEmail, superPassPlain);
 }
 
-main()
-  .catch(e => {
-    console.error('[seed] ERRO', e);
-    process.exit(1);
-  })
-  .finally(() => prismaPublic.$disconnect()); 
+main().catch(err => {
+  console.error('[seed] ERRO', err);
+  process.exit(1);
+}).finally(() => prismaPublic.$disconnect());

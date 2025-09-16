@@ -10,7 +10,9 @@
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
-    "seed": "ts-node prisma/seed.ts",
+    "seed:dev": "ts-node src/scripts/seed.ts",
+    "seed:build": "node dist/scripts/seed.js",
+    "seed": "npm run seed:build",
     "build:openapi": "ts-node scripts/generate-openapi.ts"
   },
   "keywords": [],

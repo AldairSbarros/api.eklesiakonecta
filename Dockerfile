@@ -7,7 +7,7 @@ LABEL org.opencontainers.image.source="https://github.com/AldairSbarros/api.ekle
       org.opencontainers.image.licenses="MIT"
 
 WORKDIR /app
-
+RUN apt-get update -y && apt-get install -y openssl
 RUN apt-get update && apt-get install -y --no-install-recommends \
     python3 build-essential openssl ca-certificates curl && \
     rm -rf /var/lib/apt/lists/*
