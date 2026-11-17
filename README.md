@@ -926,3 +926,133 @@ Para exemplos detalhados de uso de cada endpoint, consulte o arquivo [`DOCUMENTA
 
 **Dúvidas?**  
 Abra uma issue ou consulte a documentação detalhada no repositório.
+## Autenticação JWT (Implementada 2026-11)
+
+### Login
+```bash
+curl -X POST http://localhost:3001/api/login \
+  -H 'Content-Type: application/json' \
+  -H 'x-schema: igreja_seed' \
+  -d '{"email":"admin@igreja.seed","senha":"AdminSeed123!"}'
+```
+
+Resposta:
+```json
+{
+  "token": "eyJhbGciOiJIUzI1NiIs...",
+  "usuario": {
+    "id": 1,
+    "nome": "Admin Seed",
+    "email": "admin@igreja.seed",
+    "role": "PASTOR",
+    "igrejaId": null
+  }
+}
+```
+
+### Headers padrão em requisições autenticadas
+```
+x-schema: <schema_da_igreja>
+Authorization: Bearer <token>
+```
+
+### Arquivos criados
+- `src/services/jwt.service.ts` - Geração e verificação de tokens JWT
+- `src/services/auth.service.ts` - Lógica de login com bcrypt
+- `src/middlewares/auth.middleware.ts` - Middleware de autenticação e autorização por roles
+- `src/routes/auth.routes.ts` - Rota POST /api/login
+- `src/core/prismaCache.ts` - Cache de instâncias Prisma por schema (LRU + TTL)
+
+### Modo de desenvolvimento
+O compose `docker-compose.dev.yml` inclui flags:
+- `DISABLE_METRICS=true`
+- `DISABLE_RATE_LIMIT=true`
+- `DISABLE_SCHEMA_HEADER=true`
+- `DISABLE_MULTI_TENANCY=true`
+
+Remova gradualmente conforme o ambiente estabilizar.
+
+## Onboarding — Cadastro de Nova Igreja (2026-11)
+
+Cria uma nova igreja (tenant) com schema dedicado e usuário PASTOR inicial:
+
+```bash
+curl -X POST http://localhost:3001/api/cadastro-inicial \
+  -H 'Content-Type: application/json' \
+  -d '{"nomeIgreja":"Igreja Batista Central","nomePastor":"Pastor João","emailPastor":"joao@batista.com","senhaPastor":"SenhaForte123"}'
+```
+
+Resposta:
+```json
+{
+  "igrejaId": 4,
+  "schema": "igreja_batista_central_4",
+  "usuario": { "id": 1, "nome": "Pastor João", "email": "joao@batista.com", "role": "PASTOR" }
+}
+```
+
+Depois faça login com `x-schema: igreja_batista_central_4`.
+
+## Proteção de 
+
+Todas as rotas de domínio exigem JWT. Operações sensíveis exigem role:
+- Criar/deletar igrejas e usuários: `PASTOR` ou `SUPERUSER`
+- Demais operações (congregações, células, membros, gerações, receitas): qualquer usuário autenticado
+
+## Frontend React + Vite (src/frontend)
+
+Páginas: Login (`/login`), Cadastro de igreja (`/cadastro`), Dashboard (`/`).
+Autenticação via localStorage (token + schema) e interceptors Axios.
+
+```bash
+cd src/frontend
+npm install
+npm run dev   # http://localhost:5173
+```
+
+## Frontend React + Vite (src/frontend)
+
+Páginas: Login (`/login`), Cadastro de igreja (`/cadastro`), Dashboard (`/`).
+Autenticação via localStorage (token + schema) e interceptors Axios.
+
+```bash
+cd src/frontend
+npm install
+npm run dev   # http://localhost:5173
+```
+
+## Onboarding — Cadastro de Nova Igreja (2026-11)
+
+Cria uma nova igreja (tenant) com schema dedicado e usuário PASTOR inicial:
+
+```bash
+curl -X POST http://localhost:3001/api/carefa-inicial \
+  -H 'Content-Type: application/json' \
+  -d '{"nomeIgreja":"Igreja Batista Central","nomePastor":"Pastor João","emailPastor":"joao@batista.com","senhaPastor":"SenhaForte123"}'
+```
+
+Resposta:
+```json
+{
+  "igrejaId": 4,
+  "schema": "igreja_batista_central_4",
+  "usuario": { "id": 1, "nome": "Pastor João", "email": "joao@batista.com", "role": "PASTOR" }
+}
+```
+
+Depois faça login com `x-schema: igreja_batista_central_4`.
+
+## Proteção de Rotas
+
+Todas as rotas de domínio exigem JWT. Operações sensíveis exigem role:
+- Criar/deletar igrejas e usuários: `PASTOR` ou `SUPERUSER`
+- Demais operações (congregações, células, membros, gerações, receitas): qualquer usuário autenticado
+
+## Deploy (Aletheia-Hub)
+
+```bash
+cd api.eklesiakonecta
+docker compose -p Aletheia-Hub -f docker-compose.dev.yml up -d --build
+```
+
+Isso cria os containers `aletheia-hub-api-1` e `aletheia-hub-postgres-1`.

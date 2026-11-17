@@ -1,7 +1,10 @@
 import express from 'express';
+import cors from 'cors';
 import path from 'path';
 import { prisma } from './core/prisma';
 import usuarioRoutes from './routes/usuario.routes';
+import authRoutes from './routes/auth.routes';
+import cadastroRoutes from './routes/cadastro.routes';
 import igrejaRoutes from './routes/igreja.routes';
 import congregacaoRoutes from './routes/congregacao.routes';
 import geracaoRoutes from './routes/geracao.routes';
@@ -9,10 +12,20 @@ import celulaRoutes from './routes/celula.routes';
 import membroRoutes from './routes/membro.routes';
 import receitaRoutes from './routes/receita.routes';
 import { AppError } from './utils/AppError';
+import { Request, Response, NextFunction } from 'express';
+
+declare global {
+  namespace Express {
+    interface Request {
+      prisma: any;
+    }
+  }
+}
 import swaggerUi from 'swagger-ui-express';
 import swaggerSpec from './docs/swaggerConfig';
 
 const app = express();
+app.use(cors({ origin: true, credentials: true }));
 app.use(express.json());
 
 // Arquivos estáticos (uploads)
@@ -40,7 +53,17 @@ app.get('/openapi.json', (_req, res) => {
 // Swagger UI
 app.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
+// Middleware de schema (multi-tenant)
+import { getPrisma } from './core/prismaCache';
+app.use((req, res, next) => {
+  const schema = (req.headers['x-schema'] as string) || 'public';
+  req.prisma = getPrisma(schema);
+  next();
+});
+
 // Montagem de rotas de domínio
+app.use('/api', authRoutes);
+app.use('/api', cadastroRoutes);
 app.use(usuarioRoutes);
 app.use(igrejaRoutes);
 app.use(congregacaoRoutes);

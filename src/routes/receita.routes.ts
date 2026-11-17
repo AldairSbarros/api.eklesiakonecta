@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { ReceitaController } from '../controllers/receita.controller';
 import { asyncHandler } from '../utils/asyncHandler';
+import { authMiddleware, requireRole } from '../middlewares/auth.middleware';
 import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
@@ -33,6 +34,6 @@ r.post('/congregacoes/:congregacaoId/receitas', (req, res, next) => {
   });
 }, asyncHandler(ReceitaController.create));
 
-r.get('/congregacoes/:congregacaoId/receitas', asyncHandler(ReceitaController.list));
-r.get('/congregacoes/:congregacaoId/relatorios/financeiro', asyncHandler(ReceitaController.relatorio));
+r.get('/congregacoes/:congregacaoId/receitas', authMiddleware, asyncHandler(ReceitaController.list));
+r.get('/congregacoes/:congregacaoId/relatorios/financeiro', authMiddleware, asyncHandler(ReceitaController.relatorio));
 export default r;
